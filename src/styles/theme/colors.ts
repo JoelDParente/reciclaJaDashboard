@@ -97,3 +97,15 @@ export const stormGrey = {
   900: '#212636',
   950: '#121621',
 } satisfies PartialColor;
+
+export const jungleGreen = {
+  100: '#BFF0CB', // tom bem claro
+  200: '#99E6B3',
+  300: '#73DC9C',
+  400: '#4DD384',
+  500: '#2FB166', // sua cor principal
+  600: '#289F5B', // ligeiramente mais escuro
+  700: '#22894D',
+  800: '#1B6F3C',
+  900: '#144C28',
+};

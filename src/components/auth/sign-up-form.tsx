@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import Box from "@mui/material/Box";
 import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -23,11 +24,11 @@ import { authClient } from '@/lib/auth/client';
 import { useUser } from '@/hooks/use-user';
 
 const schema = zod.object({
-  firstName: zod.string().min(1, { message: 'First name is required' }),
-  lastName: zod.string().min(1, { message: 'Last name is required' }),
-  email: zod.string().min(1, { message: 'Email is required' }).email(),
-  password: zod.string().min(6, { message: 'Password should be at least 6 characters' }),
-  terms: zod.boolean().refine((value) => value, 'You must accept the terms and conditions'),
+  firstName: zod.string().min(1, { message: 'Nome é obrigatório' }),
+  lastName: zod.string().min(1, { message: 'Sobrenome é obrigatório' }),
+  email: zod.string().min(1, { message: 'Email é obrigatório' }).email(),
+  password: zod.string().min(6, { message: 'A senha deve ter mais de 6 caracteres' }),
+  terms: zod.boolean().refine((value) => value, 'Você deve aceitar os termos de privacidade'),
 });
 
 type Values = zod.infer<typeof schema>;
@@ -71,86 +72,138 @@ export function SignUpForm(): React.JSX.Element {
   );
 
   return (
-    <Stack spacing={3}>
-      <Stack spacing={1}>
-        <Typography variant="h4">Sign up</Typography>
-        <Typography color="text.secondary" variant="body2">
-          Already have an account?{' '}
-          <Link component={RouterLink} href={paths.auth.signIn} underline="hover" variant="subtitle2">
-            Sign in
-          </Link>
-        </Typography>
-      </Stack>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing={2}>
-          <Controller
-            control={control}
-            name="firstName"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
-                <InputLabel>First name</InputLabel>
-                <OutlinedInput {...field} label="First name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="lastName"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
-                <InputLabel>Last name</InputLabel>
-                <OutlinedInput {...field} label="Last name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="email"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.email)}>
-                <InputLabel>Email address</InputLabel>
-                <OutlinedInput {...field} label="Email address" type="email" />
-                {errors.email ? <FormHelperText>{errors.email.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="password"
-            render={({ field }) => (
-              <FormControl error={Boolean(errors.password)}>
-                <InputLabel>Password</InputLabel>
-                <OutlinedInput {...field} label="Password" type="password" />
-                {errors.password ? <FormHelperText>{errors.password.message}</FormHelperText> : null}
-              </FormControl>
-            )}
-          />
-          <Controller
-            control={control}
-            name="terms"
-            render={({ field }) => (
-              <div>
-                <FormControlLabel
-                  control={<Checkbox {...field} />}
-                  label={
-                    <React.Fragment>
-                      I have read the <Link>terms and conditions</Link>
-                    </React.Fragment>
-                  }
-                />
-                {errors.terms ? <FormHelperText error>{errors.terms.message}</FormHelperText> : null}
-              </div>
-            )}
-          />
-          {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
-          <Button disabled={isPending} type="submit" variant="contained">
-            Sign up
-          </Button>
+    <Box
+      sx={{
+              padding: 3,
+              borderRadius: 2,
+              boxShadow: "rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px",                 // sombra opcional
+            }}
+    >
+
+      <Stack spacing={3}>
+        <Stack spacing={1}>
+          <Typography variant="h4">Cadastro</Typography>
+          <Typography color="text.secondary" variant="body2">
+            Já possui uma conta?{' '}
+            <Link component={RouterLink} href={paths.auth.signIn} underline="hover" variant="subtitle2" color="success">
+              Login
+            </Link>
+          </Typography>
         </Stack>
-      </form>
-      <Alert color="warning">Created users are not persisted</Alert>
-    </Stack>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack spacing={2}>
+            <Controller
+              control={control}
+              name="firstName"
+              render={({ field }) => (
+                <FormControl error={Boolean(errors.firstName)}
+                  sx={{
+                    "& label.Mui-focused": {
+                      color: "success.main", // muda a cor do label no foco
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      "&.Mui-focused fieldset": {
+                        borderColor: "success.main", // muda a borda no foco
+                      },
+                    },
+                  }}
+                >
+                  <InputLabel>Nome</InputLabel>
+                  <OutlinedInput {...field} label="Nome" />
+                  {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
+                </FormControl>
+              )}
+            />
+            <Controller
+              control={control}
+              name="lastName"
+              render={({ field }) => (
+                <FormControl error={Boolean(errors.firstName)}
+                  sx={{
+                    "& label.Mui-focused": {
+                      color: "success.main", // muda a cor do label no foco
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      "&.Mui-focused fieldset": {
+                        borderColor: "success.main", // muda a borda no foco
+                      },
+                    },
+                  }}
+                >
+                  <InputLabel>Sobrenome</InputLabel>
+                  <OutlinedInput {...field} label="Sobrenome" />
+                  {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
+                </FormControl>
+              )}
+            />
+            <Controller
+              control={control}
+              name="email"
+              render={({ field }) => (
+                <FormControl error={Boolean(errors.email)}
+                  sx={{
+                    "& label.Mui-focused": {
+                      color: "success.main", // muda a cor do label no foco
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      "&.Mui-focused fieldset": {
+                        borderColor: "success.main", // muda a borda no foco
+                      },
+                    },
+                  }}
+                >
+                  <InputLabel>Email</InputLabel>
+                  <OutlinedInput {...field} label="Email" type="email" />
+                  {errors.email ? <FormHelperText>{errors.email.message}</FormHelperText> : null}
+                </FormControl>
+              )}
+            />
+            <Controller
+              control={control}
+              name="password"
+              render={({ field }) => (
+                <FormControl error={Boolean(errors.password)}
+                  sx={{
+                    "& label.Mui-focused": {
+                      color: "success.main", // muda a cor do label no foco
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      "&.Mui-focused fieldset": {
+                        borderColor: "success.main", // muda a borda no foco
+                      },
+                    },
+                  }}
+                >
+                  <InputLabel>Senha</InputLabel>
+                  <OutlinedInput {...field} label="Senha" type="password" />
+                  {errors.password ? <FormHelperText>{errors.password.message}</FormHelperText> : null}
+                </FormControl>
+              )}
+            />
+            <Controller
+              control={control}
+              name="terms"
+              render={({ field }) => (
+                <div>
+                  <FormControlLabel
+                    control={<Checkbox {...field} color="success" />}
+                    label={
+                      <React.Fragment>
+                        Confirmo que li os <Link color="success">termos de privacidade.</Link>
+                      </React.Fragment>
+                    }
+                  />
+                  {errors.terms ? <FormHelperText error>{errors.terms.message}</FormHelperText> : null}
+                </div>
+              )}
+            />
+            {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
+            <Button disabled={isPending} type="submit" variant="contained" color="success">
+              Cadastrar
+            </Button>
+          </Stack>
+        </form>
+      </Stack>
+    </Box>
   );
 }
