@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore"
 import { getAnalytics, isSupported } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -22,6 +23,7 @@ const app = initializeApp(firebaseConfig);
 
 // Auth sempre pode ser usado
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 
 // Analytics só no browser
 let analytics: ReturnType<typeof getAnalytics> | null = null;
