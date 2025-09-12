@@ -79,7 +79,7 @@ export function SignInForm(): React.JSX.Element {
       <Stack spacing={4}>
         <Stack spacing={1}>
 
-          <Typography variant="h4">Login</Typography>
+          <Typography variant="h4" style={{textAlign:"center", color:"success.main"}}>Login</Typography>
         </Stack>
         <form onSubmit={handleSubmit(onSubmit)} >
           <Stack spacing={2}>

@@ -7,14 +7,14 @@ import { config } from '@/config';
 import { ColetasCalendar } from '@/components/dashboard/calendar/coleta-calendar';
 
 export const metadata = {
-  title: `Coletas | Dashboard | ${config.site.name}`,
+  title: `Calendário de Coletas | ${config.site.name}`,
 } satisfies Metadata;
 
 export default function Page(): React.JSX.Element {
   return (
     <Stack spacing={3}>
       <div>
-        <Typography variant="h4">Programação de Coletas Seletivas</Typography>
+        <Typography variant="h4">Calendário de Coletas</Typography>
       </div>
       <ColetasCalendar />
     </Stack>

@@ -1,6 +1,6 @@
 import type { ColorSystemOptions } from '@mui/material/styles';
 
-import { california, kepple, neonBlue, nevada, redOrange, shakespeare, stormGrey, jungleGreen } from './colors';
+import { california, kepple, neonBlue, nevada, redOrange, shakespeare, stormGrey, jungleGreen, sideNavBg } from './colors';
 import type { ColorScheme } from './types';
 
 export const colorSchemes = {
@@ -48,7 +48,7 @@ export const colorSchemes = {
         dark: nevada[300],
         contrastText: 'var(--mui-palette-common-black)',
       },
-     success: {
+      success: {
         ...jungleGreen,
         light: jungleGreen[300],
         main: jungleGreen[500],

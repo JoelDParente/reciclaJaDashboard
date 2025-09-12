@@ -109,3 +109,15 @@ export const jungleGreen = {
   800: '#1B6F3C',
   900: '#144C28',
 };
+
+export const sideNavBg = {
+  100: '#8A918D', // tom bem claro
+  200: '#767D79',
+  300: '#616964',
+  400: '#4E534F',
+  500: '#2B332E', // sua cor principal
+  600: '#262D2A', // ligeiramente mais escuro
+  700: '#202623',
+  800: '#1A1E1C',
+  900: '#131615',
+}

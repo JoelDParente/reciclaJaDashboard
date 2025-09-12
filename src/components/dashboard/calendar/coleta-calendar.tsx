@@ -11,52 +11,70 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
+  Typography,
+  Grid,
+  Paper,
   Select,
   MenuItem,
-  Stack,
-  Typography,
-  Box,
+  FormControl,
 } from "@mui/material";
 
-import { collection, doc, setDoc, getDoc, deleteDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  deleteDoc,
+  onSnapshot,
+} from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 
-// Lista de bairros fixos
-const BAIRROS = ["Centro", "Jardim América", "Vila Nova", "Industrial", "Boa Vista"];
+// Lista fixa de bairros
+const BAIRROS = [
+  "Centro",
+  "Jardim América",
+  "Vila Nova",
+  "Industrial",
+  "Boa Vista",
+];
 
-type ColetaData = {
-  bairros: string[];
-  turno: string;
-};
+interface BairroSelecionado {
+  bairro: string;
+  turno: "Manhã" | "Tarde";
+}
 
 export function ColetasCalendar() {
   const [events, setEvents] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedBairros, setSelectedBairros] = useState<string[]>([]);
-  const [turno, setTurno] = useState("manha");
 
-  // Carregar eventos existentes do Firestore
+  // Modal para criar/editar evento
+  const [modalNovoEventoOpen, setModalNovoEventoOpen] = useState(false);
+
+  // Modal para visualizar evento existente
+  const [modalEventoExistenteOpen, setModalEventoExistenteOpen] = useState(false);
+
+  const [bairrosSelecionados, setBairrosSelecionados] = useState<BairroSelecionado[]>([]);
+  const [eventData, setEventData] = useState<any | null>(null);
+
+  // Carregar eventos em tempo real
   useEffect(() => {
-    const fetchEvents = async () => {
-      const querySnapshot = await getDocs(collection(db, "coletas"));
+    const unsubscribe = onSnapshot(collection(db, "coletas"), (snapshot) => {
       const loadedEvents: any[] = [];
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data() as ColetaData;
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         loadedEvents.push({
-          title: `${(data.bairros || []).join(", ")} - ${data.turno}`,
+          id: docSnap.id,
+          title: `Coleta em ${data.bairros.length} bairros`,
           start: docSnap.id,
+          extendedProps: { bairros: data.bairros },
         });
       });
       setEvents(loadedEvents);
-    };
-    fetchEvents();
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Clique em uma data do calendário
+  // Clique em uma data
   const handleDateClick = async (arg: any) => {
     const date = arg.dateStr;
     setSelectedDate(date);
@@ -65,105 +83,160 @@ export function ColetasCalendar() {
     const snapshot = await getDoc(docRef);
 
     if (snapshot.exists()) {
-      const data = snapshot.data() as ColetaData;
-      setSelectedBairros(data.bairros);
-      setTurno(data.turno);
+      // Se já existe coleta → abrir modal de evento existente
+      setEventData({ id: date, ...snapshot.data() });
+      setModalEventoExistenteOpen(true);
     } else {
-      setSelectedBairros([]);
-      setTurno("manha");
+      // Se não existe coleta → abrir modal para criar novo
+      setBairrosSelecionados([]);
+      setModalNovoEventoOpen(true);
     }
-
-    setOpen(true);
   };
 
-  // Salvar evento
+  // Seleção/deseleção de bairro
+  const handleTurnoChange = (bairro: string, turno: "Manhã" | "Tarde") => {
+    setBairrosSelecionados((prev) => {
+      const exists = prev.find((b) => b.bairro === bairro);
+      if (!exists) {
+        return [...prev, { bairro, turno }];
+      } else if (exists.turno === turno) {
+        return prev.filter((b) => b.bairro !== bairro);
+      } else {
+        return prev.map((b) =>
+          b.bairro === bairro ? { ...b, turno } : b
+        );
+      }
+    });
+  };
+
+  const getTurnoDoBairro = (bairro: string) => {
+    const b = bairrosSelecionados.find((b) => b.bairro === bairro);
+    return b ? b.turno : "";
+  };
+
+  // Salvar no Firestore
   const handleSave = async () => {
     if (!selectedDate) return;
-    const docRef = doc(collection(db, "coletas"), selectedDate);
-    await setDoc(docRef, { bairros: selectedBairros, turno });
-
-    setEvents((prev) => [
-      ...prev.filter((e) => e.start !== selectedDate),
-      { title: `${selectedBairros.join(", ")} - ${turno}`, start: selectedDate },
-    ]);
-
-    setOpen(false);
+    if (bairrosSelecionados.length === 0) {
+      alert("Selecione pelo menos um bairro e turno.");
+      return;
+    }
+    await setDoc(doc(db, "coletas", selectedDate), { bairros: bairrosSelecionados });
+    setModalNovoEventoOpen(false);
   };
 
-  // Apagar evento
+  // Excluir evento
   const handleDelete = async () => {
-    if (!selectedDate) return;
-    const docRef = doc(collection(db, "coletas"), selectedDate);
-    await deleteDoc(docRef);
-
-    setEvents((prev) => prev.filter((e) => e.start !== selectedDate));
-
-    setSelectedBairros([]);
-    setTurno("manha");
-    setOpen(false);
+    if (!eventData) return;
+    await deleteDoc(doc(db, "coletas", eventData.id));
+    setModalEventoExistenteOpen(false);
   };
 
-  const toggleBairro = (bairro: string) => {
-    setSelectedBairros((prev) =>
-      prev.includes(bairro) ? prev.filter((b) => b !== bairro) : [...prev, bairro]
-    );
+  // Editar evento → abre modal de criação preenchido
+  const handleEdit = () => {
+    if (!eventData) return;
+    setBairrosSelecionados(eventData.bairros || []);
+    setModalEventoExistenteOpen(false);
+    setModalNovoEventoOpen(true);
   };
+
+  const handleEventClick = async (arg: any) => {
+  const date = arg.event.startStr;
+  setSelectedDate(date);
+
+  const docRef = doc(collection(db, "coletas"), date);
+  const snapshot = await getDoc(docRef);
+
+  if (snapshot.exists()) {
+    const data = snapshot.data() as { bairros: BairroSelecionado[] };
+    setBairrosSelecionados(data.bairros || []);
+  } else {
+    setBairrosSelecionados([]);
+  }
+
+  setModalEventoExistenteOpen(true);
+};
 
   return (
-    <Box>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Calendário de Coletas
-      </Typography>
-
-      {/* Calendário sempre visível */}
+    <div>
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         events={events}
         dateClick={handleDateClick}
+        eventClick={handleEventClick}
         height="auto"
+        locale="pt"
       />
 
-      {/* Modal para criar/visualizar evento */}
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
-        <DialogTitle>
-          {selectedDate} - Configuração de Coleta
-        </DialogTitle>
+      {/* Modal de novo evento */}
+      <Dialog open={modalNovoEventoOpen} onClose={() => setModalNovoEventoOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>Configurar Coleta</DialogTitle>
         <DialogContent>
-          <Typography variant="subtitle1">Bairros</Typography>
-          <FormGroup>
-            {BAIRROS.map((bairro) => (
-              <FormControlLabel
-                key={bairro}
-                control={
-                  <Checkbox
-                    checked={selectedBairros.includes(bairro)}
-                    onChange={() => toggleBairro(bairro)}
-                  />
-                }
-                label={bairro}
-              />
-            ))}
-          </FormGroup>
-
-          <Typography variant="subtitle1" sx={{ mt: 2 }}>
-            Turno
-          </Typography>
-          <Select fullWidth value={turno} onChange={(e) => setTurno(e.target.value)}>
-            <MenuItem value="manha">manha</MenuItem>
-            <MenuItem value="tarde">Tarde</MenuItem>
-          </Select>
+          <Grid container spacing={2}> {/* AQUI ESTÁ A CORREÇÃO: ADICIONANDO 'container' */}
+            {BAIRROS.map((bairro) => {
+              const turnoAtual = getTurnoDoBairro(bairro);
+              return (
+                <Grid size={{xs:12, md:4 }} key={bairro}>
+                  <Paper
+                    sx={{
+                      cursor: "pointer",
+                      minHeight: 120,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 2,
+                      border: turnoAtual ? "2px solid #4caf50" : "2px solid #ccc",
+                      backgroundColor: turnoAtual ? "#e8f5e9" : "#fff",
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                      {bairro}
+                    </Typography>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        value={turnoAtual}
+                        displayEmpty
+                        onChange={(e) => handleTurnoChange(bairro, e.target.value as "Manhã" | "Tarde")}
+                        renderValue={(selected) => (selected ? selected : "Selecione turno")}
+                      >
+                        <MenuItem value="Manhã">Manhã</MenuItem>
+                        <MenuItem value="Tarde">Tarde</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDelete} color="error">
-            Apagar
-          </Button>
-          <Button onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={handleSave} variant="contained" color="primary">
+          <Button onClick={() => setModalNovoEventoOpen(false)} color="inherit">Cancelar</Button>
+          <Button variant="contained" onClick={handleSave} color="success">
             Salvar
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+
+      {/* Modal de evento existente */}
+      <Dialog open={modalEventoExistenteOpen} onClose={() => setModalEventoExistenteOpen(false)} fullWidth>
+        <DialogTitle>Evento existente - {eventData?.id}</DialogTitle>
+        <DialogContent>
+          {eventData?.bairros?.map((b: any, idx: number) => (
+            <Typography key={idx}>
+              {b.bairro} - {b.turno}
+            </Typography>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEdit}>Editar bairros</Button>
+          <Button onClick={handleDelete} color="error">
+            Apagar evento
+          </Button>
+          <Button onClick={() => setModalEventoExistenteOpen(false)}>Sair</Button>
+        </DialogActions>
+      </Dialog>
+    </div>
   );
 }
