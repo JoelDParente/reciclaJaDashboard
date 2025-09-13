@@ -4,6 +4,7 @@ import { paths } from '@/paths';
 export const navItems = [
   { key: 'overview', title: 'Visão Geral', href: paths.dashboard.overview, icon: 'chart-pie' },
   { key: 'calendar', title: 'Calendário', href: paths.dashboard.calendar, icon: 'calendar-month' },
+  { key: 'mapa', title: 'Localização dos PEVs', href: paths.dashboard.mapa, icon: 'map' },
   { key: 'customers', title: 'Customers', href: paths.dashboard.customers, icon: 'users' },
   { key: 'integrations', title: 'Integrations', href: paths.dashboard.integrations, icon: 'plugs-connected' },
   { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },

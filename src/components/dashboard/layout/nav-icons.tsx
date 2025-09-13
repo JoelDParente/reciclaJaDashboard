@@ -5,6 +5,7 @@ import { CalendarDotsIcon } from '@phosphor-icons/react/dist/ssr/CalendarDots';
 import { PlugsConnectedIcon } from '@phosphor-icons/react/dist/ssr/PlugsConnected';
 import { UserIcon } from '@phosphor-icons/react/dist/ssr/User';
 import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
+import { Recycle } from '@phosphor-icons/react/dist/ssr/Recycle';
 import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
 
 export const navIcons = {
@@ -13,6 +14,7 @@ export const navIcons = {
   'gear-six': GearSixIcon,
   'plugs-connected': PlugsConnectedIcon,
   'x-square': XSquare,
+  'map': Recycle,
   user: UserIcon,
   users: UsersIcon,
 } as Record<string, Icon>;
