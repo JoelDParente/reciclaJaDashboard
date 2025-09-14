@@ -8,7 +8,8 @@ export const paths = {
     integrations: '/dashboard/integrations',
     settings: '/dashboard/settings',
     calendar: '/dashboard/calendar',
-    mapa: '/dashboard/mapa'
+    mapa: '/dashboard/mapa',
+    pesagem: '/dashboard/pesagem',
   },
   errors: { notFound: '/errors/not-found' },
 } as const;

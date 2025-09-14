@@ -1,53 +1,60 @@
-import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Stack from '@mui/material/Stack';
-import type { SxProps } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import { ArrowDownIcon } from '@phosphor-icons/react/dist/ssr/ArrowDown';
-import { ArrowUpIcon } from '@phosphor-icons/react/dist/ssr/ArrowUp';
-import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
+"use client";
 
-export interface TotalCustomersProps {
-  diff?: number;
-  trend: 'up' | 'down';
-  sx?: SxProps;
-  value: string;
-}
+import * as React from "react";
+import Avatar from "@mui/material/Avatar";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { UsersIcon } from "@phosphor-icons/react/dist/ssr/Users";
+import { UserService } from "@/services/userService";
 
-export function TotalCustomers({ diff, trend, sx, value }: TotalCustomersProps): React.JSX.Element {
-  const TrendIcon = trend === 'up' ? ArrowUpIcon : ArrowDownIcon;
-  const trendColor = trend === 'up' ? 'var(--mui-palette-success-main)' : 'var(--mui-palette-error-main)';
+export function TotalCustomers(): React.JSX.Element {
+  const [total, setTotal] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    const fetchTotal = async () => {
+      try {
+        const totalUsers = await UserService.getTotalUsers();
+        setTotal(totalUsers);
+      } catch (error) {
+        console.error("Erro ao buscar total de usuários:", error);
+      }
+    };
+
+    fetchTotal();
+  }, []);
 
   return (
-    <Card sx={sx}>
-      <CardContent>
+    <Card>
+      <CardContent
+      sx={{
+        boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
+        borderRadius: "10px",
+      }}
+      >
         <Stack spacing={2}>
-          <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }} spacing={3}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
+            spacing={3}
+          >
             <Stack spacing={1}>
               <Typography color="text.secondary" variant="overline">
-                Total Customers
+                Usuários Cadastrados
               </Typography>
-              <Typography variant="h4">{value}</Typography>
+              <Typography variant="h4">{total}</Typography>
             </Stack>
-            <Avatar sx={{ backgroundColor: 'var(--mui-palette-success-main)', height: '56px', width: '56px' }}>
+            <Avatar
+              sx={{
+                backgroundColor: "var(--mui-palette-info-main)",
+                height: "56px",
+                width: "56px",
+              }}
+            >
               <UsersIcon fontSize="var(--icon-fontSize-lg)" />
             </Avatar>
           </Stack>
-          {diff ? (
-            <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
-              <Stack sx={{ alignItems: 'center' }} direction="row" spacing={0.5}>
-                <TrendIcon color={trendColor} fontSize="var(--icon-fontSize-md)" />
-                <Typography color={trendColor} variant="body2">
-                  {diff}%
-                </Typography>
-              </Stack>
-              <Typography color="text.secondary" variant="caption">
-                Since last month
-              </Typography>
-            </Stack>
-          ) : null}
         </Stack>
       </CardContent>
     </Card>
