@@ -10,7 +10,7 @@ export function PesagemResiduosWrapper() {
   const [uid, setUid] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const auth = getAuth();
+    const auth = getAuth(); 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUid(user?.uid ?? null);
     });

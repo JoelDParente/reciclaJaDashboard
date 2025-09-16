@@ -12,7 +12,7 @@ import { TasksProgress } from '@/components/dashboard/overview/tasks-progress';
 import { TotalCustomers } from '@/components/dashboard/overview/total-customers';
 import { TotalProfit } from '@/components/dashboard/overview/total-profit';
 import { Traffic } from '@/components/dashboard/overview/traffic';
-
+ 
 export const metadata = { title: `Visão Geral | ${config.site.name}` } satisfies Metadata;
 
 export default function Page(): React.JSX.Element {
@@ -61,10 +61,6 @@ export default function Page(): React.JSX.Element {
         }}
       >
         <Sales
-          chartSeries={[
-            { name: 'This year', data: [18, 16, 5, 8, 3, 14, 14, 16, 17, 19, 18, 20] },
-            { name: 'Last year', data: [12, 11, 4, 6, 2, 9, 9, 10, 11, 12, 13, 13] },
-          ]}
           sx={{ height: '100%' }}
         />
       </Grid>
