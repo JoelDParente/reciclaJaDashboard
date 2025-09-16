@@ -9,12 +9,14 @@ import {
   deleteDoc,
   query,
   where,
+  Timestamp
 } from "firebase/firestore";
 import { SolicitacaoColeta } from "@/models/solicitacao";
 
 const solicitacaoCollection = collection(db, "collection_requests");
 
 export class SolicitacaoDAO {
+  private collectionRef = collection(db, "collection_requests");
   // Criar uma nova solicitação
   async create(solicitacao: Omit<SolicitacaoColeta, "id">): Promise<string> {
     const docRef = await addDoc(solicitacaoCollection, solicitacao);
@@ -63,5 +65,17 @@ export class SolicitacaoDAO {
   async countAll(): Promise<number> {
     const snapshot = await getDocs(solicitacaoCollection);
     return snapshot.size;
+  }
+
+  async getAllRequests(): Promise<SolicitacaoColeta[]> {
+    const snapshot = await getDocs(collection(db, 'collection_requests'));
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        date: data.date.toDate(),
+        timestamp: data.timestamp.toDate(),
+      } as SolicitacaoColeta;
+    });
   }
 }

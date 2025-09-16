@@ -1,22 +1,23 @@
+// src/app/dashboard/pesagem/page.tsx
 import * as React from 'react';
 import type { Metadata } from 'next';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { config } from '@/config';
-import { PesagemResiduos } from '@/components/dashboard/pesagem/pesagem-residuos';
+import { PesagemResiduosWrapper } from '@/components/dashboard/pesagem/pesagem-residuos-wrapper';
 
-export const metadata = {
+// ---------------- Metadata da página ----------------
+export const metadata: Metadata = {
   title: `Pesagem de Resíduos | ${config.site.name}`,
-} satisfies Metadata;
+};
 
+// ---------------- Page Server Component ----------------
 export default function Page(): React.JSX.Element {
   return (
-    <Stack spacing={1} sx={{ p: 0 }}>
-      <div>
-        <Typography variant="h4">Pesagem de Resíduos</Typography>
-      </div>
-      <PesagemResiduos />
+    <Stack spacing={2} sx={{ p: 2 }}>
+      <Typography variant="h4">Pesagem de Resíduos</Typography>
+      <PesagemResiduosWrapper />
     </Stack>
   );
 }

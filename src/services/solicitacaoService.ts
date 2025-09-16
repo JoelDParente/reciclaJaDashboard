@@ -31,4 +31,16 @@ export const SolicitacaoService = {
   async countSolicitacoes() {
     return solicitacaoDao.countAll();
   },
+
+  async  fetchMonthlyEvolution(): Promise<number[]> {
+  const requests = await solicitacaoDao.getAllRequests();
+
+  const monthlyCounts = Array(12).fill(0);
+  requests.forEach((req) => {
+    const month = req.date.getMonth(); // 0-11
+    monthlyCounts[month]++;
+  });
+
+  return monthlyCounts;
+}
 };

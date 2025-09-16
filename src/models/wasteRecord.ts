@@ -1,9 +1,9 @@
 export interface WasteRecord {
   id?: string;
+  userId: string; // UID do usuário (Firebase Auth)
   bairro: string;
   cidade: string;
-  pontoColeta?: string;
-  dataRegistro: Date; // vamos trabalhar com Date no front
+  dataRegistro: Date;
   quantidade: {
     plastico: number;
     papel: number;
@@ -13,4 +13,5 @@ export interface WasteRecord {
     outros: number;
   };
   totalKg: number;
+  pontos: number; // pontos calculados
 }
