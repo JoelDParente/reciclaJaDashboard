@@ -8,6 +8,7 @@ import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
 import { Recycle } from '@phosphor-icons/react/dist/ssr/Recycle';
 import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
 import { Scales } from '@phosphor-icons/react/dist/ssr/Scales';
+import { Warning } from '@phosphor-icons/react/dist/ssr/Warning';
 
 export const navIcons = {
   'calendar-month': CalendarDotsIcon,
@@ -17,6 +18,7 @@ export const navIcons = {
   'x-square': XSquare,
   'map': Recycle,
   'scales': Scales,
+  'warning':Warning,
   user: UserIcon,
   users: UsersIcon,
 } as Record<string, Icon>;

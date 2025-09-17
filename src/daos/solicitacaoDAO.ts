@@ -66,7 +66,7 @@ export class SolicitacaoDAO {
     const snapshot = await getDocs(solicitacaoCollection);
     return snapshot.size;
   }
-
+ 
   async getAllRequests(): Promise<SolicitacaoColeta[]> {
     const snapshot = await getDocs(collection(db, 'collection_requests'));
     return snapshot.docs.map((doc) => {

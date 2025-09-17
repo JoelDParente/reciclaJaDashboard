@@ -32,13 +32,12 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 
-// Lista fixa de bairros e turnos
-const BAIRROS = ["02 De agosto", "Açude Velho", "Alto Tiradentes", "Bento Pereira", 
-  "Campo De Aviação", "Centro", "DNOCS", "Girilândia", "Granville", "Nova Morada", 
-  "Parque De Exposição", "Pedra E Cal", "Populares", "PROURB", "São Francisco", "São José", "Várzea", "Vazantes"];
-const TURNOS = ["Manhã", "Tarde"] as const;
+// 📌 Importando Service
+import { BairroService } from "@/services/bairrosService";
+import { BairroDoc } from "@/models/bairros";
 
-// Definindo tipos para maior segurança
+// Lista fixa só para turnos
+const TURNOS = ["Manhã", "Tarde"] as const;
 type Turno = typeof TURNOS[number];
 
 interface BairroColeta {
@@ -65,8 +64,22 @@ export function ColetasCalendar() {
   const [modalEventoExistenteOpen, setModalEventoExistenteOpen] = useState(false);
 
   const [agendamento, setAgendamento] = useState<AgendamentoMatrix>({});
-  
   const [eventData, setEventData] = useState<EventData | null>(null);
+
+  // 📌 Novo estado para os bairros vindos do Firestore
+  const [bairrosDisponiveis, setBairrosDisponiveis] = useState<string[]>([]);
+
+  // Carregar bairros da cidade
+  useEffect(() => {
+    const service = new BairroService();
+    service.listarBairrosPorCidade("cidade") // exemplo: "SP" ou "suaCidade"
+      .then((cidade: BairroDoc | null) => {
+        if (cidade) {
+          setBairrosDisponiveis(cidade.bairros);
+        }
+      })
+      .catch((err) => console.error("Erro ao carregar bairros:", err));
+  }, []);
 
   // Carregar eventos em tempo real
   useEffect(() => {
@@ -74,11 +87,11 @@ export function ColetasCalendar() {
       const loadedEvents: any[] = [];
       snapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const bairros = data.bairros as BairroColeta[] || [];
+        const bairros = (data.bairros as BairroColeta[]) || [];
         const numBairros = bairros.length;
         loadedEvents.push({
           id: docSnap.id,
-          title: `Coleta em ${numBairros} bairro${numBairros !== 1 ? 's' : ''}`,
+          title: `Coleta em ${numBairros} bairro${numBairros !== 1 ? "s" : ""}`,
           start: docSnap.id,
           extendedProps: { bairros },
         });
@@ -91,11 +104,11 @@ export function ColetasCalendar() {
   // Função auxiliar para inicializar a matriz de estado
   const initializeAgendamento = (bairrosExistentes: BairroColeta[] = []) => {
     const initialState: AgendamentoMatrix = {};
-    BAIRROS.forEach(bairro => {
+    bairrosDisponiveis.forEach((bairro) => {
       initialState[bairro] = {} as any;
-      TURNOS.forEach(turno => {
+      TURNOS.forEach((turno) => {
         initialState[bairro][turno] = bairrosExistentes.some(
-          item => item.nome === bairro && item.turno === turno
+          (item) => item.nome === bairro && item.turno === turno
         );
       });
     });
@@ -112,7 +125,7 @@ export function ColetasCalendar() {
 
     if (snapshot.exists()) {
       const data = snapshot.data();
-      setEventData({ id: date, bairros: data.bairros as BairroColeta[] || [] });
+      setEventData({ id: date, bairros: (data.bairros as BairroColeta[]) || [] });
       setModalEventoExistenteOpen(true);
     } else {
       initializeAgendamento();
@@ -122,22 +135,22 @@ export function ColetasCalendar() {
 
   // Lógica para marcar/desmarcar o checkbox
   const handleToggle = (bairro: string, turno: Turno) => {
-    setAgendamento(prevAgendamento => ({
+    setAgendamento((prevAgendamento) => ({
       ...prevAgendamento,
       [bairro]: {
         ...prevAgendamento[bairro],
-        [turno]: !prevAgendamento[bairro][turno]
-      }
+        [turno]: !prevAgendamento[bairro][turno],
+      },
     }));
   };
 
   // Salvar no Firestore
   const handleSave = async () => {
     if (!selectedDate) return;
-    
+
     const bairrosParaSalvar: BairroColeta[] = [];
-    Object.keys(agendamento).forEach(bairro => {
-      TURNOS.forEach(turno => {
+    Object.keys(agendamento).forEach((bairro) => {
+      TURNOS.forEach((turno) => {
         if (agendamento[bairro][turno]) {
           bairrosParaSalvar.push({ nome: bairro, turno });
         }
@@ -154,7 +167,7 @@ export function ColetasCalendar() {
     } catch (e) {
       console.error("Erro ao salvar o agendamento: ", e);
     }
-    
+
     setModalNovoEventoOpen(false);
   };
 
@@ -190,14 +203,19 @@ export function ColetasCalendar() {
         eventClick={handleEventClick}
         height="720px"
         locale="pt"
-        buttonText= {{today: 'Hoje', month: 'Mês', week: 'Semana', day: 'Dia' }}
+        buttonText={{ today: "Hoje", month: "Mês", week: "Semana", day: "Dia" }}
       />
 
       {/* Modal de novo evento/edição */}
-      <Dialog open={modalNovoEventoOpen} onClose={() => setModalNovoEventoOpen(false)} fullWidth maxWidth="md">
+      <Dialog
+        open={modalNovoEventoOpen}
+        onClose={() => setModalNovoEventoOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
         <DialogTitle>Selecionar Bairros e Turnos</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
             Marque os turnos de coleta para cada bairro.
           </Typography>
           <TableContainer component={Paper}>
@@ -205,22 +223,26 @@ export function ColetasCalendar() {
               <TableHead>
                 <TableRow>
                   <TableCell>Bairro</TableCell>
-                  {TURNOS.map(turno => (
-                    <TableCell key={turno} align="center">{turno}</TableCell>
+                  {TURNOS.map((turno) => (
+                    <TableCell key={turno} align="center">
+                      {turno}
+                    </TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {BAIRROS.map(bairro => (
+                {bairrosDisponiveis.map((bairro) => (
                   <TableRow key={bairro}>
                     <TableCell component="th" scope="row">
                       {bairro}
                     </TableCell>
-                    {TURNOS.map(turno => (
+                    {TURNOS.map((turno) => (
                       <TableCell key={turno} align="center">
                         <Checkbox
                           color="success"
-                          checked={agendamento[bairro] ? agendamento[bairro][turno] : false}
+                          checked={
+                            agendamento[bairro] ? agendamento[bairro][turno] : false
+                          }
                           onChange={() => handleToggle(bairro, turno)}
                         />
                       </TableCell>
@@ -232,7 +254,9 @@ export function ColetasCalendar() {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setModalNovoEventoOpen(false)} color="inherit">Cancelar</Button>
+          <Button onClick={() => setModalNovoEventoOpen(false)} color="inherit">
+            Cancelar
+          </Button>
           <Button variant="contained" onClick={handleSave} color="success">
             Salvar
           </Button>
@@ -240,7 +264,11 @@ export function ColetasCalendar() {
       </Dialog>
 
       {/* Modal de evento existente */}
-      <Dialog open={modalEventoExistenteOpen} onClose={() => setModalEventoExistenteOpen(false)} fullWidth>
+      <Dialog
+        open={modalEventoExistenteOpen}
+        onClose={() => setModalEventoExistenteOpen(false)}
+        fullWidth
+      >
         <DialogTitle>Coletas em {eventData?.id}</DialogTitle>
         <DialogContent>
           {eventData?.bairros?.map((b, idx) => (
@@ -250,11 +278,18 @@ export function ColetasCalendar() {
           ))}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleEdit} color="success">Editar</Button>
+          <Button onClick={handleEdit} color="success">
+            Editar
+          </Button>
           <Button onClick={handleDelete} color="error">
             Apagar evento
           </Button>
-          <Button onClick={() => setModalEventoExistenteOpen(false)} color="inherit">Sair</Button>
+          <Button
+            onClick={() => setModalEventoExistenteOpen(false)}
+            color="inherit"
+          >
+            Sair
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

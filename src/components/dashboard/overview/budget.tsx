@@ -4,7 +4,7 @@ import * as React from "react";
 import Avatar from "@mui/material/Avatar";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Stack from "@mui/material/Stack";
+import Stack from "@mui/material/Stack"; 
 import Typography from "@mui/material/Typography";
 import { BellRinging } from "@phosphor-icons/react/dist/ssr/BellRinging";
 import { SolicitacaoService } from "@/services/solicitacaoService";

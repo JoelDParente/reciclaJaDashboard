@@ -11,16 +11,16 @@ async getCurrentConfig(): Promise<PointsConfig | null> {
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
 
-  const docData = snapshot.docs[0].data();
+  const docSnap = snapshot.docs[0];
+  const docData = docSnap.data();
 
-  // Converter updatedAt corretamente
   const updatedAt =
     docData.updatedAt instanceof Timestamp
       ? docData.updatedAt.toDate()
       : docData.updatedAt;
 
   return {
-    id: docData.id,
+    id: docSnap.id, // ✅ aqui
     mode: docData.mode,
     fixedPoints: docData.fixedPoints,
     pointsPerKg: docData.pointsPerKg,
@@ -30,8 +30,11 @@ async getCurrentConfig(): Promise<PointsConfig | null> {
 }
 
   // Salvar ou atualizar configuração
-  async updateConfig(config: PointsConfig): Promise<void> {
-    const docRef = doc(this.collectionRef, config.id || 'default');
-    await setDoc(docRef, { ...config, updatedAt: new Date() });
-  }
+async updateConfig(config: PointsConfig): Promise<void> {
+  const docRef = doc(this.collectionRef, config.id || 'default');
+  await setDoc(docRef, {
+    ...config,
+    updatedAt: Timestamp.fromDate(new Date()), // Firestore Timestamp
+  });
+}
 }

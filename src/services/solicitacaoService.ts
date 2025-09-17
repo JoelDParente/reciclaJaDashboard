@@ -1,3 +1,4 @@
+// service
 import { SolicitacaoDAO } from "@/daos/solicitacaoDAO";
 import { SolicitacaoColeta } from "@/models/solicitacao";
 
@@ -7,7 +8,7 @@ export const SolicitacaoService = {
   async createSolicitacao(data: Omit<SolicitacaoColeta, "id">) {
     return solicitacaoDao.create(data);
   },
-
+ 
   async getAllSolicitacoes() {
     return solicitacaoDao.findAll();
   },
@@ -32,15 +33,30 @@ export const SolicitacaoService = {
     return solicitacaoDao.countAll();
   },
 
-  async  fetchMonthlyEvolution(): Promise<number[]> {
-  const requests = await solicitacaoDao.getAllRequests();
+  async fetchMonthlyEvolution(): Promise<number[]> {
+    const requests = await solicitacaoDao.getAllRequests();
 
-  const monthlyCounts = Array(12).fill(0);
-  requests.forEach((req) => {
-    const month = req.date.getMonth(); // 0-11
-    monthlyCounts[month]++;
-  });
+    const monthlyCounts = Array(12).fill(0);
+    requests.forEach((req) => {
+      const month = req.date.getMonth(); // 0-11
+      monthlyCounts[month]++;
+    });
 
-  return monthlyCounts;
-}
+    return monthlyCounts;
+  },
+
+  // 🔹 Novo método: Agrupado por bairro
+  async getSolicitacoesByBairro(): Promise<{ labels: string[]; chartSeries: number[] }> {
+    const requests = await solicitacaoDao.getAllRequests();
+
+    const agrupado: Record<string, number> = {};
+    requests.forEach((req) => {
+      agrupado[req.bairro] = (agrupado[req.bairro] || 0) + 1;
+    });
+
+    return {
+      labels: Object.keys(agrupado),
+      chartSeries: Object.values(agrupado),
+    };
+  },
 };

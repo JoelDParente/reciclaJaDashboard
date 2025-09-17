@@ -1,5 +1,14 @@
-import { WasteRecordDAO } from "@/daos/wasteRecordDAO";
-import { WasteRecord } from "@/models/wasteRecord";
+import { WasteRecordDAO } from '@/daos/wasteRecordDAO';
+import { WasteRecord } from '@/models/wasteRecord';
+
+export type Quantidades = {
+  plastico: number;
+  papel: number;
+  vidro: number;
+  metal: number;
+  organico: number;
+  outros: number;
+};
 
 export class WasteRecordService {
   private dao: WasteRecordDAO;
@@ -8,9 +17,19 @@ export class WasteRecordService {
     this.dao = new WasteRecordDAO();
   }
 
+  /** Retorna todos os registros publicamente */
+  async getAllRecords(): Promise<WasteRecord[]> {
+    return this.dao.findAll();
+  }
+
+  /** Totais por tipo (Quantidades) */
+  async getTotais(records: WasteRecord[]): Promise<Quantidades> {
+    return this.calcularTotais(records);
+  }
+
   /** Registrar pesagem */
-  async registrar(record: Omit<WasteRecord, "id">): Promise<string> {
-    return this.dao.create(record);
+  async registrar(record: Omit<WasteRecord, 'id'>): Promise<void> {
+    await this.dao.create(record);
   }
 
   /** Total de lixo por bairro */
@@ -23,18 +42,17 @@ export class WasteRecordService {
   async getMediaPorBairro(bairro: string): Promise<number> {
     const records = await this.dao.findByBairro(bairro);
     if (records.length === 0) return 0;
-    const total = records.reduce((acc, r) => acc + r.totalKg, 0);
-    return total / records.length;
+    return records.reduce((acc, r) => acc + r.totalKg, 0) / records.length;
   }
 
   /** Totais por tipo em um bairro */
-  async getTotaisPorTipoBairro(bairro: string): Promise<Record<string, number>> {
+  async getTotaisPorTipoBairro(bairro: string): Promise<Quantidades> {
     const records = await this.dao.findByBairro(bairro);
     return this.calcularTotais(records);
   }
 
   /** Totais por tipo em uma cidade */
-  async getTotaisPorTipoCidade(cidade: string): Promise<Record<string, number>> {
+  async getTotaisPorTipoCidade(cidade: string): Promise<Quantidades> {
     const records = await this.dao.findByCidade(cidade);
     return this.calcularTotais(records);
   }
@@ -46,9 +64,9 @@ export class WasteRecordService {
     return { cidade, totais, totalKg };
   }
 
-  /** 🔧 Função auxiliar para somar quantidades */
-  private calcularTotais(records: WasteRecord[]): Record<string, number> {
-    const totais: Record<string, number> = {
+  /** Função auxiliar para somar quantidades */
+  private calcularTotais(records: WasteRecord[]): Quantidades {
+    const totais: Quantidades = {
       plastico: 0,
       papel: 0,
       vidro: 0,
@@ -57,9 +75,12 @@ export class WasteRecordService {
       outros: 0,
     };
 
-    records.forEach(r => {
-      Object.keys(r.quantidade).forEach(tipo => {
-        totais[tipo] += r.quantidade[tipo as keyof typeof r.quantidade];
+    records.forEach((r) => {
+      Object.entries(r.quantidade).forEach(([tipo, valor]) => {
+        // ✅ garante que só as chaves de Quantidades sejam somadas
+        if (tipo in totais) {
+          totais[tipo as keyof Quantidades] += valor;
+        }
       });
     });
 

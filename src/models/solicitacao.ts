@@ -4,7 +4,7 @@ export interface SolicitacaoColeta {
   userName: string;
   email: string;
   bairro: string;
-  date: Date;           // data da coleta
+  date: Date;           // data da coleta 
   date_string: string;  // string da data (YYYY-MM-DD)
   timestamp: Date;      // timestamp de criação da solicitação
 }

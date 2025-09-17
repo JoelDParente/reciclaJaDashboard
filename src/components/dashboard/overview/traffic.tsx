@@ -1,31 +1,36 @@
 'use client';
 
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardHeader from '@mui/material/CardHeader';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import type { SxProps } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import type { Icon } from '@phosphor-icons/react/dist/lib/types';
-import { DesktopIcon } from '@phosphor-icons/react/dist/ssr/Desktop';
-import { DeviceTabletIcon } from '@phosphor-icons/react/dist/ssr/DeviceTablet';
-import { PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone';
 import type { ApexOptions } from 'apexcharts';
 
 import { Chart } from '@/components/core/chart';
-
-const iconMapping = { Desktop: DesktopIcon, Tablet: DeviceTabletIcon, Phone: PhoneIcon } as Record<string, Icon>;
+import { SolicitacaoService } from '@/services/solicitacaoService';
 
 export interface TrafficProps {
-  chartSeries: number[];
-  labels: string[];
   sx?: SxProps;
 }
 
-export function Traffic({ chartSeries, labels, sx }: TrafficProps): React.JSX.Element {
+export function Traffic({ sx }: TrafficProps): React.JSX.Element {
+  const [labels, setLabels] = useState<string[]>([]);
+  const [chartSeries, setChartSeries] = useState<number[]>([]);
   const chartOptions = useChartOptions(labels);
+
+  useEffect(() => {
+  async function carregar() {
+    const { labels, chartSeries } = await SolicitacaoService.getSolicitacoesByBairro();
+    setLabels(labels);
+    setChartSeries(chartSeries);
+  }
+  carregar();
+}, []);
+
 
   return (
     <Card sx={sx}>
@@ -33,21 +38,16 @@ export function Traffic({ chartSeries, labels, sx }: TrafficProps): React.JSX.El
       <CardContent>
         <Stack spacing={2}>
           <Chart height={300} options={chartOptions} series={chartSeries} type="donut" width="100%" />
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'center' }}>
-            {chartSeries.map((item, index) => {
-              const label = labels[index];
-              const Icon = iconMapping[label];
 
-              return (
-                <Stack key={label} spacing={1} sx={{ alignItems: 'center' }}>
-                  {Icon ? <Icon fontSize="var(--icon-fontSize-lg)" /> : null}
-                  <Typography variant="h6">{label}</Typography>
-                  <Typography color="text.secondary" variant="subtitle2">
-                    {item}%
-                  </Typography>
-                </Stack>
-              );
-            })}
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {chartSeries.map((item, index) => (
+              <Stack key={labels[index]} spacing={1} sx={{ alignItems: 'center', minWidth: 80 }}>
+                <Typography variant="h6">{labels[index]}</Typography>
+                <Typography color="text.secondary" variant="subtitle2">
+                  {item}
+                </Typography>
+              </Stack>
+            ))}
           </Stack>
         </Stack>
       </CardContent>
