@@ -1,12 +1,14 @@
 import { UserDAO } from "@/daos/userDAO";
 import { User } from "@/models/user";
+import { getFirestore, doc, updateDoc, increment } from "firebase/firestore";
 
 const userDao = new UserDAO();
-
-
+const db = getFirestore();
 
 export const UserService = {
-  async createUser(data: Omit<User, "id" | "createdAt" | "isActive" | "points">) {
+  async createUser(
+    data: Omit<User, "id" | "createdAt" | "isActive" | "points">
+  ) {
     return userDao.create({
       ...data,
       createdAt: new Date(),
@@ -15,7 +17,12 @@ export const UserService = {
     });
   },
 
-
+  async updateUserPoints(userId: string, pontos: number) {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      points: increment(pontos), // 👈 use o mesmo nome do modelo User
+    });
+  },
 
   async getAllUsers() {
     return userDao.findAll();
@@ -35,5 +42,5 @@ export const UserService = {
 
   async getTotalUsers() {
     return userDao.countAll();
-  }
+  },
 };

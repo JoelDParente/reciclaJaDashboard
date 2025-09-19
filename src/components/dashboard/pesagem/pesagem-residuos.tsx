@@ -2,14 +2,8 @@
 
 import * as React from 'react';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  Grid,
-  TextField,
-  MenuItem,
-  Button,
-  Typography,
+  Card, CardContent, CardHeader, Grid, TextField,
+  MenuItem, Button, Typography
 } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
@@ -22,6 +16,10 @@ import { PointsConfig } from '@/models/points';
 import { PointsConfigDAO } from '@/daos/pointsDAO';
 import { PointsService } from '@/services/pointsService';
 import { WasteRecordService } from '@/services/wasteRecordService';
+import { UserService } from '@/services/userService';
+import { SolicitacaoService } from '@/services/solicitacaoService';
+import { BairroService } from '@/services/bairrosService';
+import { SolicitacaoColeta } from '@/models/solicitacao';
 import { Chart } from '@/components/core/chart';
 
 const coresResiduos = {
@@ -33,19 +31,24 @@ const coresResiduos = {
   outros: '#808080',
 };
 
-
-
-export function PesagemResiduos({ userId }: { userId: string }) {
+export function PesagemResiduos() {
   const wasteService = React.useMemo(() => new WasteRecordService(), []);
   const pointsDAO = React.useMemo(() => new PointsConfigDAO(), []);
+  const bairroService = React.useMemo(() => new BairroService(), []);
 
   const qtdPadrao = { plastico: 0, papel: 0, vidro: 0, metal: 0, organico: 0, outros: 0 };
 
-  const [bairro, setBairro] = React.useState('');
   const [quantidades, setQuantidades] = React.useState<WasteRecord['quantidade']>(qtdPadrao);
   const [registros, setRegistros] = React.useState<WasteRecord[]>([]);
   const [config, setConfig] = React.useState<PointsConfig | null>(null);
   const [previewPoints, setPreviewPoints] = React.useState<number>(0);
+
+  const [solicitacoesPendentes, setSolicitacoesPendentes] = React.useState<SolicitacaoColeta[]>([]);
+  const [selectedSolicitacao, setSelectedSolicitacao] = React.useState<string | null>(null);
+
+  const [bairros, setBairros] = React.useState<string[]>([]);
+  const [selectedBairro, setSelectedBairro] = React.useState<string>('');
+
   const [metrics, setMetrics] = React.useState({
     totalKg: 0,
     totalPorTipo: { ...qtdPadrao },
@@ -54,33 +57,40 @@ export function PesagemResiduos({ userId }: { userId: string }) {
 
   const totalKgForm = Object.values(quantidades).reduce((acc, v) => acc + v, 0);
 
-  /** Carregar configuração */
+  // Carregar configuração de pontos
   React.useEffect(() => {
-    pointsDAO.getCurrentConfig().then((cfg) => {
-      if (cfg) setConfig(cfg);
-    });
-  }, []);
+    pointsDAO.getCurrentConfig().then(cfg => { if (cfg) setConfig(cfg); });
+  }, [pointsDAO]);
 
-  /** Carregar registros e métricas */
+  // Carregar registros e métricas
   const loadRegistros = React.useCallback(async () => {
-    const data = await wasteService.getAllRecords(); // ✅ agora público
-    const totais = await wasteService.getTotais(data); // ✅ agora público
+    const data = await wasteService.getAllRecords();
+    const totais = await wasteService.getTotais(data);
     const totalKg = data.reduce((acc, r) => acc + r.totalKg, 0);
     const mediaKg = data.length ? totalKg / data.length : 0;
-
-    setMetrics({
-      totalKg,
-      totalPorTipo: totais,
-      mediaKg,
-    });
+    setMetrics({ totalKg, totalPorTipo: totais, mediaKg });
     setRegistros(data);
+  }, [wasteService]);
+
+  React.useEffect(() => { loadRegistros(); }, [loadRegistros]);
+
+  // Carregar solicitações pendentes
+  const loadSolicitacoes = React.useCallback(async () => {
+    const todas = await SolicitacaoService.getAllSolicitacoes();
+    setSolicitacoesPendentes(todas.filter(s => !s.status));
   }, []);
 
-  React.useEffect(() => {
-    loadRegistros();
-  }, [loadRegistros]);
+  React.useEffect(() => { loadSolicitacoes(); }, [loadSolicitacoes]);
 
-  /** Atualizar preview de pontos */
+  // Carregar bairros
+  React.useEffect(() => {
+    bairroService.listarCidades().then(data => {
+      const lista: string[] = data.flatMap(c => c.bairros);
+      setBairros(lista);
+    });
+  }, [bairroService]);
+
+  // Atualizar preview de pontos
   React.useEffect(() => {
     if (config) {
       const result = PointsService.calculatePoints(config, quantidades, totalKgForm);
@@ -89,16 +99,19 @@ export function PesagemResiduos({ userId }: { userId: string }) {
   }, [config, quantidades, totalKgForm]);
 
   const handleChangeQuantidade = (tipo: keyof typeof quantidades, value: number) => {
-    setQuantidades((prev) => ({ ...prev, [tipo]: value }));
+    setQuantidades(prev => ({ ...prev, [tipo]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!bairro || !config) return alert('Selecione um bairro e verifique a configuração de pontos.');
+    if (!selectedSolicitacao || !selectedBairro || !config) return alert('Selecione solicitação, bairro e verifique a configuração.');
+
+    const solicitacao = solicitacoesPendentes.find(s => s.id === selectedSolicitacao);
+    if (!solicitacao) return;
 
     const pontos = PointsService.calculatePoints(config, quantidades, totalKgForm).totalPoints;
     const novoRegistro: Omit<WasteRecord, 'id'> = {
-      userId,
-      bairro,
+      userId: solicitacao.userId,
+      bairro: selectedBairro,
       cidade: 'Morada Nova',
       dataRegistro: new Date(),
       quantidade: quantidades,
@@ -107,27 +120,31 @@ export function PesagemResiduos({ userId }: { userId: string }) {
     };
 
     await wasteService.registrar(novoRegistro);
-    alert(`Pesagem registrada com sucesso ✅ +${pontos} pontos`);
+    await UserService.updateUserPoints(solicitacao.userId, pontos);
+    await SolicitacaoService.updateSolicitacao(solicitacao.id!, { status: true });
+
+    alert(`Pesagem registrada ✅ +${pontos} pontos para ${solicitacao.userName}`);
 
     setQuantidades(qtdPadrao);
-    setBairro('');
+    setSelectedSolicitacao(null);
+    setSelectedBairro('');
     loadRegistros();
+    loadSolicitacoes();
   };
 
-  /** Dados para gráficos */
+  // Dados para gráficos
   const pieSeries = Object.values(metrics.totalPorTipo);
-  const pieLabels = Object.keys(metrics.totalPorTipo).map((t) => t[0].toUpperCase() + t.slice(1));
-
-  const barCategories = registros.slice(0, 7).map((r) => r.bairro) || ['Nenhum registro'];
-  const barSeries = Object.keys(qtdPadrao).map((t) => ({
+  const pieLabels = Object.keys(metrics.totalPorTipo).map(t => t[0].toUpperCase() + t.slice(1));
+  const barCategories = registros.slice(0, 7).map(r => r.bairro) || ['Nenhum registro'];
+  const barSeries = Object.keys(qtdPadrao).map(t => ({
     name: t[0].toUpperCase() + t.slice(1),
-    data: registros.slice(0, 7).map((r) => r.quantidade[t as keyof typeof qtdPadrao]),
+    data: registros.slice(0, 7).map(r => r.quantidade[t as keyof typeof qtdPadrao])
   }));
 
   return (
     <Grid container spacing={3}>
       {/* Configuração de Pontuação */}
-      <Grid size={{ xs: 12, md: 12 }}>
+      <Grid size={{ xs: 12 }}>
         <Card sx={{ height: '100%' }}>
           <CardHeader title="Configuração de Pontuação" />
           <CardContent>
@@ -140,70 +157,76 @@ export function PesagemResiduos({ userId }: { userId: string }) {
                   setConfig({ ...config, mode: Number(e.target.value) as 1 | 2 | 3 })
                 }
                 fullWidth
+                color='success'
+
               >
-                <MenuItem value={1}>1 - Fixa por Solicitação</MenuItem>
-                <MenuItem value={2}>2 - Fixa + Peso Total</MenuItem>
-                <MenuItem value={3}>3 - Fixa + Peso por Tipo</MenuItem>
+                <MenuItem value={1} >1 - Fixa por Solicitação</MenuItem>
+                <MenuItem value={2} >2 - Fixa + Peso Total</MenuItem>
+                <MenuItem value={3} >3 - Fixa + Peso por Tipo</MenuItem>
               </TextField>
             )}
           </CardContent>
         </Card>
       </Grid>
-      {/* Formulário de Pesagem */}
+
+      {/* Formulário de pesagem */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Card sx={{ height: '100%' }}>
+        <Card>
           <CardHeader title="Registrar Pesagem" />
           <CardContent>
             <TextField
-              label="Bairro"
-              value={bairro}
-              onChange={(e) => setBairro(e.target.value)}
-              select
-              fullWidth
-              margin="normal"
+              label="Solicitação"
+              value={selectedSolicitacao || ''}
+              onChange={e => setSelectedSolicitacao(e.target.value)}
+              select fullWidth margin="normal"
+              color='success'
+
             >
-              {['Centro', 'Jardim', 'Vila Nova'].map((b) => (
-                <MenuItem key={b} value={b}>
-                  {b}
+              {solicitacoesPendentes.length === 0 && (
+                <MenuItem disabled value="">Nenhuma solicitação pendente</MenuItem>
+              )}
+              {solicitacoesPendentes.map(s => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.userName} - {s.bairro} ({new Date(s.date).toLocaleDateString()})
                 </MenuItem>
               ))}
             </TextField>
 
-            {Object.keys(quantidades).map((tipo) => (
+            <TextField
+              label="Bairro"
+              value={selectedBairro}
+              onChange={e => setSelectedBairro(e.target.value)}
+              select fullWidth margin="normal"
+              color='success'
+            >
+              {bairros.map(b => <MenuItem key={b} value={b}>{b}</MenuItem>)}
+            </TextField>
+
+            {Object.keys(quantidades).map(tipo => (
               <TextField
                 key={tipo}
                 label={`${tipo[0].toUpperCase() + tipo.slice(1)} (kg)`}
                 type="number"
                 value={quantidades[tipo as keyof typeof quantidades]}
-                onChange={(e) =>
-                  handleChangeQuantidade(tipo as keyof typeof quantidades, Number(e.target.value))
-                }
-                fullWidth
-                margin="normal"
+                onChange={e => handleChangeQuantidade(tipo as keyof typeof quantidades, Number(e.target.value))}
+                fullWidth margin="normal"
               />
             ))}
 
             <Typography sx={{ mt: 2 }}>Total: {totalKgForm.toFixed(2)} kg</Typography>
-            <Typography sx={{ mt: 1 }}>
-              Pontos previstos: <strong>{previewPoints}</strong>
-            </Typography>
+            <Typography sx={{ mt: 1 }}>Pontos previstos: <strong>{previewPoints}</strong></Typography>
 
-            <Button
-              fullWidth
-              variant="contained"
-              color="success"
-              sx={{ mt: 3 }}
-              onClick={handleSubmit}
-            >
+            <Button fullWidth variant="contained" color="success" sx={{ mt: 3 }}
+              onClick={handleSubmit} disabled={!selectedSolicitacao || !selectedBairro}>
               Registrar
             </Button>
           </CardContent>
         </Card>
       </Grid>
 
-     {/* Métricas e Gráficos */}
+      {/* Métricas e Gráficos */}
       <Grid size={{ xs: 12, md: 6 }}>
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           {/* Métricas */}
           {[
             { title: 'Total Registrado', value: metrics.totalKg.toFixed(2) + ' kg' },
@@ -275,9 +298,6 @@ export function PesagemResiduos({ userId }: { userId: string }) {
         </Grid>
       </Grid>
 
-
- 
-
       {/* Tabela de Registros */}
       <Grid size={{ xs: 12 }}>
         <Card>
@@ -289,7 +309,7 @@ export function PesagemResiduos({ userId }: { userId: string }) {
               <Table>
                 <TableHead>
                   <TableRow>
-                    {['Bairro', 'Plástico', 'Papel', 'Vidro', 'Metal', 'Orgânico', 'Outros', 'Total (kg)', 'Pontos', 'Data'].map(
+                    {['Usuário', 'Bairro', 'Plástico', 'Papel', 'Vidro', 'Metal', 'Orgânico', 'Outros', 'Total (kg)', 'Pontos', 'Data'].map(
                       (h) => (
                         <TableCell key={h}>{h}</TableCell>
                       )
@@ -299,6 +319,7 @@ export function PesagemResiduos({ userId }: { userId: string }) {
                 <TableBody>
                   {registros.slice(0, 10).map((r) => (
                     <TableRow key={r.id}>
+                      <TableCell>{solicitacoesPendentes.find(s => s.userId === r.userId)?.userName || 'N/A'}</TableCell>
                       <TableCell>{r.bairro}</TableCell>
                       {Object.keys(qtdPadrao).map((t) => (
                         <TableCell key={t}>{r.quantidade[t as keyof typeof qtdPadrao]}</TableCell>
@@ -315,6 +336,5 @@ export function PesagemResiduos({ userId }: { userId: string }) {
         </Card>
       </Grid>
     </Grid>
-
   );
 }

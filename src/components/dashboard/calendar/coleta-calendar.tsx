@@ -32,7 +32,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 
-// 📌 Importando Service
+// Importando Service
 import { BairroService } from "@/services/bairrosService";
 import { BairroDoc } from "@/models/bairros";
 

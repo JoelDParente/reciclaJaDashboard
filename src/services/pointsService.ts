@@ -1,30 +1,32 @@
 import { PointsConfig, PointsResult } from '@/models/points';
+import { WasteRecord } from '@/models/wasteRecord';
 
 export class PointsService {
   static calculatePoints(
     config: PointsConfig,
-    quantidade: Record<string, number>,
+    quantidades: WasteRecord['quantidade'],
     totalKg: number
   ): PointsResult {
     let totalPoints = 0;
-    let breakdown: Record<string, number> = {};
+    const breakdown: Record<string, number> = {};
 
     switch (config.mode) {
-      case 1:
+      case 1: // Pontos fixos
         totalPoints = config.fixedPoints;
         break;
 
-      case 2:
+      case 2: // Fixo + por Kg
         totalPoints = config.fixedPoints + totalKg * config.pointsPerKg;
         break;
 
-      case 3:
+      case 3: // Fixo + por material
         totalPoints = config.fixedPoints;
-        Object.entries(quantidade).forEach(([tipo, kg]) => {
-          const pts = kg * (config.materialWeights[tipo] ?? 0);
-          breakdown[tipo] = pts;
-          totalPoints += pts;
-        });
+        for (const mat in quantidades) {
+          const fator = config.materialWeights[mat] || 0;
+          const pontosMaterial = quantidades[mat as keyof typeof quantidades] * fator;
+          breakdown[mat] = pontosMaterial;
+          totalPoints += pontosMaterial;
+        }
         break;
     }
 
