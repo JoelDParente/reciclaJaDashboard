@@ -9,10 +9,10 @@ import { Trophy } from '@phosphor-icons/react/dist/ssr/Trophy';
 
 export interface TotalProfitProps {
   sx?: SxProps;
-  value: string;
 }
 
-export function TotalProfit({ value, sx }: TotalProfitProps): React.JSX.Element {
+export async function TotalProfit({ sx }: TotalProfitProps): Promise<React.JSX.Element> {
+
   return (
     <Card sx={sx}>
       <CardContent>
@@ -21,7 +21,7 @@ export function TotalProfit({ value, sx }: TotalProfitProps): React.JSX.Element 
             <Typography color="text.secondary" variant="overline">
               Pontos resgatados
             </Typography>
-            <Typography variant="h4">{value}</Typography>
+            <Typography variant="h4">{}</Typography>
           </Stack>
           <Avatar sx={{ backgroundColor: 'var(--mui-palette-warning-main)', height: '56px', width: '56px' }}>
             <Trophy fontSize="var(--icon-fontSize-lg)" />

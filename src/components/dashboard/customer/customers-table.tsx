@@ -14,48 +14,102 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import dayjs from 'dayjs';
 
 import { useSelection } from '@/hooks/use-selection';
+import { collection, getDocs, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/firebase/firebaseConfig';
 
-function noop(): void {
-  // do nothing
-}
-
-export interface Customer {
+interface ReportRow {
   id: string;
-  avatar: string;
-  name: string;
-  email: string;
-  address: { city: string; state: string; country: string; street: string };
-  phone: string;
+  userName: string;
+  userEmail: string;
+  bairro?: string;
+  localOcorrencia: string;
   createdAt: Date;
 }
 
-interface CustomersTableProps {
-  count?: number;
-  page?: number;
-  rows?: Customer[];
-  rowsPerPage?: number;
-}
+export function ReportsTable(): React.JSX.Element {
+  const [rows, setRows] = React.useState<ReportRow[]>([]);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
-export function CustomersTable({
-  count = 0,
-  rows = [],
-  page = 0,
-  rowsPerPage = 0,
-}: CustomersTableProps): React.JSX.Element {
+  React.useEffect(() => {
+    const fetchData = async () => {
+      const reportsSnap = await getDocs(collection(db, 'irregular_reports'));
+      const reports: ReportRow[] = [];
+
+      for (const reportDoc of reportsSnap.docs) {
+        const data = reportDoc.data();
+        const userId = data.userId;
+        let userName = 'Desconhecido';
+        let userEmail = '---';
+        let bairro = '---';
+
+        if (userId) {
+          const userSnap = await getDoc(doc(db, 'users', userId));
+          if (userSnap.exists()) {
+            const userData: any = userSnap.data();
+            userName = userData.nome;
+            userEmail = userData.email;
+            bairro = userData.endereco?.bairro ?? '---';
+          }
+        }
+
+        reports.push({
+          id: reportDoc.id,
+          userName,
+          userEmail,
+          bairro,
+          localOcorrencia: data.reportText,
+          createdAt: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(),
+        });
+      }
+
+      setRows(reports);
+    };
+
+    fetchData();
+  }, []);
+
   const rowIds = React.useMemo(() => {
-    return rows.map((customer) => customer.id);
+    return rows.map((row) => row.id);
   }, [rows]);
 
-  const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
+  const { selectAll, deselectAll, selectOne, deselectOne, selected } =
+    useSelection(rowIds);
 
   const selectedSome = (selected?.size ?? 0) > 0 && (selected?.size ?? 0) < rows.length;
   const selectedAll = rows.length > 0 && selected?.size === rows.length;
 
+  // Função para deletar selecionados
+  const handleDeleteSelected = async () => {
+    if (!selected || selected.size === 0) return;
+
+    // Remover do Firestore
+    for (const id of selected) {
+      await deleteDoc(doc(db, 'irregular_reports', id));
+    }
+
+    // Atualizar localmente (remover linhas deletadas)
+    setRows((prev) => prev.filter((r) => !selected.has(r.id)));
+    deselectAll();
+  };
+
   return (
     <Card>
+      <Box sx={{ p: 2 }}>
+        {selected && selected.size > 0 && (
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteSelected}
+          >
+            Excluir selecionados ({selected.size})
+          </Button>
+        )}
+      </Box>
       <Box sx={{ overflowX: 'auto' }}>
         <Table sx={{ minWidth: '800px' }}>
           <TableHead>
@@ -73,55 +127,60 @@ export function CustomersTable({
                   }}
                 />
               </TableCell>
-              <TableCell>Name</TableCell>
+              <TableCell>Nome</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>Location</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Signed Up</TableCell>
+              <TableCell>Bairro do Usuário</TableCell>
+              <TableCell>Local da Ocorrência</TableCell>
+              <TableCell>Data</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => {
-              const isSelected = selected?.has(row.id);
+            {rows
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((row) => {
+                const isSelected = selected?.has(row.id);
 
-              return (
-                <TableRow hover key={row.id} selected={isSelected}>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={(event) => {
-                        if (event.target.checked) {
-                          selectOne(row.id);
-                        } else {
-                          deselectOne(row.id);
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
-                      <Avatar src={row.avatar} />
-                      <Typography variant="subtitle2">{row.name}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>{row.email}</TableCell>
-                  <TableCell>
-                    {row.address.city}, {row.address.state}, {row.address.country}
-                  </TableCell>
-                  <TableCell>{row.phone}</TableCell>
-                  <TableCell>{dayjs(row.createdAt).format('MMM D, YYYY')}</TableCell>
-                </TableRow>
-              );
-            })}
+                return (
+                  <TableRow hover key={row.id} selected={isSelected} >
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={(event) => {
+                          if (event.target.checked) {
+                            selectOne(row.id);
+                          } else {
+                            deselectOne(row.id);
+                          }
+                        }}
+                        color="success"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
+                        <Avatar />
+                        <Typography variant="subtitle2">{row.userName}</Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>{row.userEmail}</TableCell>
+                    <TableCell>{row.bairro}</TableCell>
+                    <TableCell>{row.localOcorrencia}</TableCell>
+                    <TableCell>{dayjs(row.createdAt).format('DD/MM/YYYY HH:mm')}</TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
       </Box>
       <Divider />
       <TablePagination
         component="div"
-        count={count}
-        onPageChange={noop}
-        onRowsPerPageChange={noop}
+        color="success"
+        count={rows.length}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        onRowsPerPageChange={(event) => {
+          setRowsPerPage(parseInt(event.target.value, 10));
+          setPage(0);
+        }}
         page={page}
         rowsPerPage={rowsPerPage}
         rowsPerPageOptions={[5, 10, 25]}

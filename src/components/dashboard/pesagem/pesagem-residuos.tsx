@@ -180,14 +180,14 @@ export function PesagemResiduos() {
               onChange={e => setSelectedSolicitacao(e.target.value)}
               select fullWidth margin="normal"
               color='success'
-
+ 
             >
               {solicitacoesPendentes.length === 0 && (
                 <MenuItem disabled value="">Nenhuma solicitação pendente</MenuItem>
               )}
               {solicitacoesPendentes.map(s => (
                 <MenuItem key={s.id} value={s.id}>
-                  {s.userName} - {s.bairro} ({new Date(s.date).toLocaleDateString()})
+                  {s.userName} - {s.bairro} ({s.date_string})
                 </MenuItem>
               ))}
             </TextField>

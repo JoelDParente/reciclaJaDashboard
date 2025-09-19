@@ -32,4 +32,9 @@ export class PointsService {
 
     return { totalPoints, breakdown };
   }
+
+  static getTotalPoints(records: WasteRecord[]): number {
+    return records.reduce((acc, r) => acc + (r.pontos || 0), 0);
+  }
+
 }
