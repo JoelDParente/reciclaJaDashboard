@@ -1,17 +1,18 @@
+export type Quantidades = {
+  plastico: number;
+  papel: number;
+  vidro: number;
+  metal: number;
+  outros: number;
+};
+
 export interface WasteRecord {
   id?: string;
-  userId: string; // UID do usuário (Firebase Auth)
+  userId: string;
   bairro: string;
   cidade: string;
-  dataRegistro: Date;
-  quantidade: {
-    plastico: number;
-    papel: number;
-    vidro: number;
-    metal: number;
-    organico: number;
-    outros: number;
-  };
+  quantidade: Quantidades;
   totalKg: number;
-  pontos: number; // pontos calculados
+  pontos: number;
+  dataRegistro: Date;
 }

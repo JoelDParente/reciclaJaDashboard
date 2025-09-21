@@ -13,10 +13,10 @@ import TableBody from '@mui/material/TableBody';
 
 import { WasteRecord } from '@/models/wasteRecord';
 import { PointsConfig } from '@/models/points';
-import { PointsConfigDAO } from '@/daos/pointsDAO';
+import { PointsConfigDAO } from '@/daos/pointsConfigDAO';
+import { PointsDAO } from '@/daos/pointsDAO';
 import { PointsService } from '@/services/pointsService';
 import { WasteRecordService } from '@/services/wasteRecordService';
-import { UserService } from '@/services/userService';
 import { SolicitacaoService } from '@/services/solicitacaoService';
 import { BairroService } from '@/services/bairrosService';
 import { SolicitacaoColeta } from '@/models/solicitacao';
@@ -33,10 +33,11 @@ const coresResiduos = {
 
 export function PesagemResiduos() {
   const wasteService = React.useMemo(() => new WasteRecordService(), []);
-  const pointsDAO = React.useMemo(() => new PointsConfigDAO(), []);
+  const pointsConfigDAO = React.useMemo(() => new PointsConfigDAO(), []);
+  const pointsDAO = React.useMemo(() => new PointsDAO(), []);
   const bairroService = React.useMemo(() => new BairroService(), []);
 
-  const qtdPadrao = { plastico: 0, papel: 0, vidro: 0, metal: 0, organico: 0, outros: 0 };
+  const qtdPadrao = { plastico: 0, papel: 0, vidro: 0, metal: 0, outros: 0 };
 
   const [quantidades, setQuantidades] = React.useState<WasteRecord['quantidade']>(qtdPadrao);
   const [registros, setRegistros] = React.useState<WasteRecord[]>([]);
@@ -59,8 +60,8 @@ export function PesagemResiduos() {
 
   // Carregar configuração de pontos
   React.useEffect(() => {
-    pointsDAO.getCurrentConfig().then(cfg => { if (cfg) setConfig(cfg); });
-  }, [pointsDAO]);
+    pointsConfigDAO.getCurrentConfig().then(cfg => { if (cfg) setConfig(cfg); });
+  }, [pointsConfigDAO]);
 
   // Carregar registros e métricas
   const loadRegistros = React.useCallback(async () => {
@@ -119,8 +120,8 @@ export function PesagemResiduos() {
       pontos,
     };
 
-    await wasteService.registrar(novoRegistro);
-    await UserService.updateUserPoints(solicitacao.userId, pontos);
+    await wasteService.registrar(solicitacao.userId, novoRegistro);
+    await pointsDAO.addUserPoints(solicitacao.userId, pontos, "pesagem");
     await SolicitacaoService.updateSolicitacao(solicitacao.id!, { status: true });
 
     alert(`Pesagem registrada ✅ +${pontos} pontos para ${solicitacao.userName}`);
@@ -144,7 +145,7 @@ export function PesagemResiduos() {
   return (
     <Grid container spacing={3}>
       {/* Configuração de Pontuação */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{xs: 12}}>
         <Card sx={{ height: '100%' }}>
           <CardHeader title="Configuração de Pontuação" />
           <CardContent>
@@ -158,11 +159,10 @@ export function PesagemResiduos() {
                 }
                 fullWidth
                 color='success'
-
               >
-                <MenuItem value={1} >1 - Fixa por Solicitação</MenuItem>
-                <MenuItem value={2} >2 - Fixa + Peso Total</MenuItem>
-                <MenuItem value={3} >3 - Fixa + Peso por Tipo</MenuItem>
+                <MenuItem value={1}>1 - Fixa por Solicitação</MenuItem>
+                <MenuItem value={2}>2 - Fixa + Peso Total</MenuItem>
+                <MenuItem value={3}>3 - Fixa + Peso por Tipo</MenuItem>
               </TextField>
             )}
           </CardContent>
@@ -170,8 +170,8 @@ export function PesagemResiduos() {
       </Grid>
 
       {/* Formulário de pesagem */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Card>
+      <Grid size={{xs: 12, md: 6}}>
+        <Card sx={{ height: '100%' }}>
           <CardHeader title="Registrar Pesagem" />
           <CardContent>
             <TextField
@@ -180,7 +180,6 @@ export function PesagemResiduos() {
               onChange={e => setSelectedSolicitacao(e.target.value)}
               select fullWidth margin="normal"
               color='success'
- 
             >
               {solicitacoesPendentes.length === 0 && (
                 <MenuItem disabled value="">Nenhuma solicitação pendente</MenuItem>
@@ -225,7 +224,7 @@ export function PesagemResiduos() {
       </Grid>
 
       {/* Métricas e Gráficos */}
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{xs: 12, md: 6}}>
         <Grid container spacing={1}>
           {/* Métricas */}
           {[
@@ -233,7 +232,7 @@ export function PesagemResiduos() {
             { title: 'Média por Registro', value: metrics.mediaKg.toFixed(2) + ' kg' },
             { title: 'Registros', value: registros.length },
           ].map((card) => (
-            <Grid size={{ xs: 12, md: 4 }} key={card.title}>
+            <Grid size={{xs: 12, md: 4}} key={card.title}>
               <Card>
                 <CardContent>
                   <Typography>{card.title}</Typography>
@@ -244,7 +243,7 @@ export function PesagemResiduos() {
           ))}
 
           {/* Gráfico Pizza */}
-          <Grid size={{ xs: 12, md: 12 }}>
+          <Grid size={{xs: 12}}>
             <Card>
               <CardHeader title="Distribuição por Tipo" />
               <CardContent>
@@ -270,7 +269,7 @@ export function PesagemResiduos() {
           </Grid>
 
           {/* Gráfico Barras */}
-          <Grid size={{ xs: 12, md: 12 }}>
+          <Grid size={{xs: 12}}>
             <Card>
               <CardHeader title="Últimos Registros (kg por tipo)" />
               <CardContent>
@@ -299,7 +298,7 @@ export function PesagemResiduos() {
       </Grid>
 
       {/* Tabela de Registros */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{xs: 12, md:12}}>
         <Card>
           <CardHeader title="Últimos Registros" />
           <CardContent>
@@ -309,7 +308,7 @@ export function PesagemResiduos() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    {['Usuário', 'Bairro', 'Plástico', 'Papel', 'Vidro', 'Metal', 'Orgânico', 'Outros', 'Total (kg)', 'Pontos', 'Data'].map(
+                    {['Usuário', 'Bairro', 'Plástico', 'Papel', 'Vidro', 'Metal', 'Outros', 'Total (kg)', 'Pontos', 'Data'].map(
                       (h) => (
                         <TableCell key={h}>{h}</TableCell>
                       )

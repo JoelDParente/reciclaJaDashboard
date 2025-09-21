@@ -6,6 +6,16 @@ const userDao = new UserDAO();
 const db = getFirestore();
 
 export const UserService = {
+
+   async incrementUserTotals(userId: string, totalKg: number, pontos: number) {
+    const userRef = doc(db, 'users', userId);
+
+    await updateDoc(userRef, {
+      totalKg: increment(totalKg),
+      points: increment(pontos),
+    });
+  },
+
   async createUser(
     data: Omit<User, "id" | "createdAt" | "isActive" | "points">
   ) {

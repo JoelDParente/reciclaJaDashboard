@@ -63,16 +63,12 @@ export function LatestRequests(_sx: any): React.JSX.Element {
           id: s.id!,
           userName,
           bairro,
-          createdAt: s.date,
+          createdAt: s.timestamp,
         });
-      let date = s.date.toDateString
-        console.log(dayjs(date).format('DD/MM/YYYY'));
-        
-      
       }
 
       setRequests(rows);
-      
+
     };
 
     fetchRequests();

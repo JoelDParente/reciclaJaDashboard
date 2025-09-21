@@ -45,7 +45,6 @@ export const SolicitacaoService = {
     return monthlyCounts;
   },
 
-  // 🔹 Novo método: Agrupado por bairro
   async getSolicitacoesByBairro(): Promise<{ labels: string[]; chartSeries: number[] }> {
     const requests = await solicitacaoDao.getAllRequests();
 

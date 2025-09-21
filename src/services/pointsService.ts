@@ -11,15 +11,13 @@ export class PointsService {
     const breakdown: Record<string, number> = {};
 
     switch (config.mode) {
-      case 1: // Pontos fixos
+      case 1:
         totalPoints = config.fixedPoints;
         break;
-
-      case 2: // Fixo + por Kg
+      case 2:
         totalPoints = config.fixedPoints + totalKg * config.pointsPerKg;
         break;
-
-      case 3: // Fixo + por material
+      case 3:
         totalPoints = config.fixedPoints;
         for (const mat in quantidades) {
           const fator = config.materialWeights[mat] || 0;
@@ -33,8 +31,7 @@ export class PointsService {
     return { totalPoints, breakdown };
   }
 
-  static getTotalPoints(records: WasteRecord[]): number {
-    return records.reduce((acc, r) => acc + (r.pontos || 0), 0);
+  static somarPontos(records: { totalPoints: number }[]): number {
+    return records.reduce((acc, r) => acc + r.totalPoints, 0);
   }
-
 }

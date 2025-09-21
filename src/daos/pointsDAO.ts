@@ -1,40 +1,38 @@
-import { PointsConfig } from '@/models/points';
-import { db } from '@/firebase/firebaseConfig'; // seu Firebase Admin SDK
-import { collection, doc, getDocs, query, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
+import { PointsRecord } from '@/models/points';
+import { db } from '@/firebase/firebaseConfig';
+import { collection, addDoc, getDocs, orderBy, Timestamp, query } from 'firebase/firestore';
 
-export class PointsConfigDAO {
-  private collectionRef = collection(db, 'pointsConfig');
+export class PointsDAO {
+  private collectionRef(userId: string) {
+    return collection(db, `users/${userId}/pontos`);
+  }
 
-  // Buscar a configuração mais recente
-async getCurrentConfig(): Promise<PointsConfig | null> {
-  const q = query(this.collectionRef, orderBy('updatedAt', 'desc'), limit(1));
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
+  async create(userId: string, record: Omit<PointsRecord, 'id'>): Promise<string> {
+    const docRef = await addDoc(this.collectionRef(userId), {
+      ...record,
+      createdAt: Timestamp.fromDate(record.createdAt),
+    });
+    return docRef.id;
+  }
 
-  const docSnap = snapshot.docs[0];
-  const docData = docSnap.data();
+  async findByUser(userId: string): Promise<PointsRecord[]> {
+    const snapshot = await getDocs(
+      query(this.collectionRef(userId), orderBy('createdAt', 'desc'))
+    );
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: (doc.data().createdAt as Timestamp).toDate(),
+    } as PointsRecord));
+  }
 
-  const updatedAt =
-    docData.updatedAt instanceof Timestamp
-      ? docData.updatedAt.toDate()
-      : docData.updatedAt;
+  async addUserPoints(userId: string, pontos: number, reason: string) {
+    await this.create(userId, {
+      userId,
+      totalPoints: pontos,
+      reason,
+      createdAt: new Date(),
+    });
+  }
 
-  return {
-    id: docSnap.id, // ✅ aqui
-    mode: docData.mode,
-    fixedPoints: docData.fixedPoints,
-    pointsPerKg: docData.pointsPerKg,
-    materialWeights: docData.materialWeights,
-    updatedAt,
-  } as PointsConfig;
-}
-
-  // Salvar ou atualizar configuração
-async updateConfig(config: PointsConfig): Promise<void> {
-  const docRef = doc(this.collectionRef, config.id || 'default');
-  await setDoc(docRef, {
-    ...config,
-    updatedAt: Timestamp.fromDate(new Date()), // Firestore Timestamp
-  });
-}
 }

@@ -9,68 +9,85 @@ import {
   orderBy,
   where,
   Timestamp,
+  collectionGroup,
 } from 'firebase/firestore';
 
 export class WasteRecordDAO {
-  private collectionRef = collection(db, 'waste_records');
+  /** Subcoleção de histórico de registros de um usuário */
+  private collectionRef(userId: string) {
+    return collection(db, `users/${userId}/historico_registro`);
+  }
 
-  /** Cria um novo registro de pesagem */
-  async create(record: Omit<WasteRecord, 'id'>): Promise<string> {
-    const docRef = await addDoc(this.collectionRef, {
+  /** Cria um novo registro de pesagem para o usuário */
+  async create(userId: string, record: Omit<WasteRecord, 'id'>): Promise<string> {
+    const docRef = await addDoc(this.collectionRef(userId), {
       ...record,
-      dataRegistro: Timestamp.fromDate(record.dataRegistro), // Salva como Timestamp
+      dataRegistro: Timestamp.fromDate(record.dataRegistro),
     });
     return docRef.id;
   }
 
-  /** Busca registros por usuário */
+  /** Busca registros de um usuário */
   async findByUser(userId: string): Promise<WasteRecord[]> {
-    const q = query(
-      this.collectionRef,
-      where('userId', '==', userId),
-      orderBy('dataRegistro', 'desc')
+    const q = query(this.collectionRef(userId), orderBy('dataRegistro', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(
+      (docSnap) =>
+        ({
+          id: docSnap.id,
+          ...docSnap.data(),
+          dataRegistro: (docSnap.data().dataRegistro as Timestamp).toDate(),
+        } as WasteRecord)
     );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => this.docToRecord(doc.id, doc.data()));
   }
 
-  /** Busca todos os registros */
+  /** Busca todos os registros de todos os usuários */
   async findAll(): Promise<WasteRecord[]> {
-    const q = query(this.collectionRef, orderBy('dataRegistro', 'desc'));
+    const q = query(collectionGroup(db, 'historico_registro'), orderBy('dataRegistro', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => this.docToRecord(doc.id, doc.data()));
+    return snapshot.docs.map(
+      (docSnap) =>
+        ({
+          id: docSnap.id,
+          ...docSnap.data(),
+          dataRegistro: (docSnap.data().dataRegistro as Timestamp).toDate(),
+        } as WasteRecord)
+    );
   }
 
-  /** Busca registros por bairro */
+  /** Busca registros filtrando por bairro */
   async findByBairro(bairro: string): Promise<WasteRecord[]> {
     const q = query(
-      this.collectionRef,
+      collectionGroup(db, 'historico_registro'),
       where('bairro', '==', bairro),
       orderBy('dataRegistro', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => this.docToRecord(doc.id, doc.data()));
+    return snapshot.docs.map(
+      (docSnap) =>
+        ({
+          id: docSnap.id,
+          ...docSnap.data(),
+          dataRegistro: (docSnap.data().dataRegistro as Timestamp).toDate(),
+        } as WasteRecord)
+    );
   }
 
-  /** Busca registros por cidade */
+  /** Busca registros filtrando por cidade */
   async findByCidade(cidade: string): Promise<WasteRecord[]> {
     const q = query(
-      this.collectionRef,
+      collectionGroup(db, 'historico_registro'),
       where('cidade', '==', cidade),
       orderBy('dataRegistro', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => this.docToRecord(doc.id, doc.data()));
-  }
-
-  /** Converte dados do Firestore para WasteRecord com Date */
-  private docToRecord(id: string, data: any): WasteRecord {
-    return {
-      id,
-      ...data,
-      dataRegistro: data.dataRegistro instanceof Timestamp
-        ? data.dataRegistro.toDate()
-        : new Date(data.dataRegistro),
-    };
+    return snapshot.docs.map(
+      (docSnap) =>
+        ({
+          id: docSnap.id,
+          ...docSnap.data(),
+          dataRegistro: (docSnap.data().dataRegistro as Timestamp).toDate(),
+        } as WasteRecord)
+    );
   }
 }
