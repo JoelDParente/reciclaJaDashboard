@@ -24,7 +24,7 @@ interface RequestRow {
   id: string;
   userName: string;
   bairro?: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface LatestRequests {
@@ -63,7 +63,7 @@ export function LatestRequests(_sx: any): React.JSX.Element {
           id: s.id!,
           userName,
           bairro,
-          createdAt: s.timestamp,
+          createdAt: s.date_string,
         });
       }
 

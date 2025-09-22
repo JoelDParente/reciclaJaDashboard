@@ -7,24 +7,11 @@ export const RankingService = {
   async getRankingGlobal(topN?: number): Promise<Ranking[]> {
     const rankings = await rankingDao.getRanking();
 
-    // Calcula posições
-    let pos = 1;
-    let lastPoints: number | null = null;
-    let sameRankCount = 0;
-
-    const ranked = rankings.map(r => {
-      const pontos = r.pontos ?? 0;
-
-      if (lastPoints === pontos) {
-        sameRankCount++;
-      } else {
-        pos += sameRankCount;
-        sameRankCount = 1;
-      }
-      lastPoints = pontos;
-
-      return { ...r, posicao: pos }; // posicao sempre definido
-    });
+    // Atribui posições sequenciais sem empates
+    const ranked = rankings.map((r, index) => ({
+      ...r,
+      posicao: index + 1, // sempre sequencial
+    }));
 
     if (topN) return ranked.slice(0, topN);
     return ranked;

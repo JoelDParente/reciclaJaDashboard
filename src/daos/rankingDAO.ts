@@ -8,13 +8,13 @@ export class RankingDAO {
   }
 
   async getRanking(): Promise<Ranking[]> {
-    const q = query(this.usersCollection(), orderBy("pontos", "desc"));
+    const q = query(this.usersCollection(), orderBy("points", "desc"));
     const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => ({
       id: doc.id,
       nome: doc.data().nome || "Sem nome",
-      pontos: doc.data().pontos ?? 0
+      pontos: doc.data().points ?? 0
     })) as Ranking[];
   }
 }
