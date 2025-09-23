@@ -112,6 +112,7 @@ export function LatestRequests(_sx: any): React.JSX.Element {
           setPage(0); // volta pra primeira página
         }}
         rowsPerPageOptions={[5, 10, 25]}
+        labelRowsPerPage="Linhas por página"
       />
     </Card>
   );

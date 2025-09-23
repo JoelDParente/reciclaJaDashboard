@@ -7,6 +7,4 @@ export const navItems = [
   { key: 'mapa', title: 'Localização dos PEVs', href: paths.dashboard.mapa, icon: 'map' },
   { key: 'pesagem', title: 'Pesagem de resíduos', href: paths.dashboard.pesagem, icon: 'scales' },
   { key: 'customers', title: 'Denúncias', href: paths.dashboard.customers, icon: 'warning' },
-  { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },
-  { key: 'settings', title: 'Configurações', href: paths.dashboard.settings, icon: 'gear-six' },
 ] satisfies NavItemConfig[];

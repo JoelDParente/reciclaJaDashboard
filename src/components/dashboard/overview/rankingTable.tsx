@@ -16,10 +16,12 @@ import {
   TableRow,
   TableContainer,
   Typography,
+  TablePagination,
 } from '@mui/material';
 import type { SxProps } from '@mui/material/styles';
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
 import { DotsThreeVerticalIcon } from '@phosphor-icons/react/dist/ssr/DotsThreeVertical';
+import { TrophyIcon } from '@phosphor-icons/react/dist/ssr/Trophy';
 import dayjs from 'dayjs';
 
 import { RankingService } from '@/services/rankingService';
@@ -40,21 +42,15 @@ export function RankingTable({ sx }: RankingTableProps): React.JSX.Element {
   const [users, setUsers] = useState<UserRanking[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
   useEffect(() => {
     async function fetchRanking() {
       setLoading(true);
       try {
         const ranking = await RankingService.getRankingGlobal();
-
-        setUsers(
-          ranking.map(u => ({
-            id: u.id,
-            nome: u.nome,
-            pontos: u.pontos,
-            posicao: u.posicao!,
-            updatedAt: u.updatedAt,
-          })) as UserRanking[]
-        );
+        setUsers(ranking as UserRanking[]);
       } catch (error) {
         console.error("Falha ao buscar o ranking:", error);
       } finally {
@@ -64,6 +60,30 @@ export function RankingTable({ sx }: RankingTableProps): React.JSX.Element {
 
     fetchRanking();
   }, []);
+
+  const handleChangePage = (_: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const getTrophyColor = (pos: number) => {
+    switch (pos) {
+      case 1:
+        return "gold";
+      case 2:
+        return "silver";
+      case 3:
+        return "#cd7f32"; // bronze
+      default:
+        return undefined;
+    }
+  };
 
   if (loading) {
     return (
@@ -84,40 +104,47 @@ export function RankingTable({ sx }: RankingTableProps): React.JSX.Element {
               <TableCell><strong>Posição</strong></TableCell>
               <TableCell><strong>Nome</strong></TableCell>
               <TableCell><strong>Pontos</strong></TableCell>
-              <TableCell><strong>Última atualização</strong></TableCell>
-              <TableCell align="right">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.posicao}</TableCell>
-                <TableCell>{user.nome}</TableCell>
-                <TableCell>{user.pontos}</TableCell>
-                <TableCell>
-                  {user.updatedAt ? dayjs(user.updatedAt).format('DD/MM/YYYY') : '—'}
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton>
-                    <DotsThreeVerticalIcon weight="bold" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {users
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {user.posicao}
+                      {user.posicao <= 3 && (
+                        <TrophyIcon
+                          weight="fill"
+                          size={20}
+                          color={getTrophyColor(user.posicao)}
+                        />
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    {user.nome}
+                  </TableCell>
+                  <TableCell>{user.pontos}</TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
       <Divider />
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button
-          color="inherit"
-          endIcon={<ArrowRightIcon fontSize="var(--icon-fontSize-md)" />}
-          size="small"
-          variant="text"
-        >
-          Ver todos
-        </Button>
-      </CardActions>
+
+      <TablePagination
+        component="div"
+        count={users.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[5, 10, 25]}
+        labelRowsPerPage="Linhas por página"
+      />
+
     </Card>
   );
 }
