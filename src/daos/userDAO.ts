@@ -40,4 +40,16 @@ export class UserDAO {
     const snapshot = await getDocs(userCollection);
     return snapshot.size;
   }
+
+  async sumAllPoints(): Promise<number> {
+    const snapshot = await getDocs(userCollection);
+    let total = 0;
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      total += (data.points ?? 0); // garante que undefined vira 0
+    });
+
+    return total;
+  }
 }

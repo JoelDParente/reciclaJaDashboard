@@ -1,4 +1,7 @@
+'use client';
+
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -7,23 +10,45 @@ import type { SxProps } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Trophy } from '@phosphor-icons/react/dist/ssr/Trophy';
 
+import { UserDAO } from '@/daos/userDAO'; // importa o DAO
+
 export interface TotalProfitProps {
   sx?: SxProps;
 }
 
-export async function TotalProfit({ sx }: TotalProfitProps): Promise<React.JSX.Element> {
+export function TotalProfit({ sx }: TotalProfitProps): React.JSX.Element {
+  const [totalPoints, setTotalPoints] = useState<number>(0);
+
+  useEffect(() => {
+    async function loadTotalPoints() {
+      const dao = new UserDAO();
+      const total = await dao.sumAllPoints();
+      setTotalPoints(total);
+    }
+    loadTotalPoints();
+  }, []);
 
   return (
     <Card sx={sx}>
       <CardContent>
-        <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }} spacing={3}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}
+          spacing={3}
+        >
           <Stack spacing={1}>
             <Typography color="text.secondary" variant="overline">
               Pontos resgatados
             </Typography>
-            <Typography variant="h4">{}</Typography>
+            <Typography variant="h4">{totalPoints}</Typography>
           </Stack>
-          <Avatar sx={{ backgroundColor: 'var(--mui-palette-warning-main)', height: '56px', width: '56px' }}>
+          <Avatar
+            sx={{
+              backgroundColor: 'var(--mui-palette-warning-main)',
+              height: '56px',
+              width: '56px',
+            }}
+          >
             <Trophy fontSize="var(--icon-fontSize-lg)" />
           </Avatar>
         </Stack>
