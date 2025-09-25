@@ -21,6 +21,7 @@ import { SolicitacaoService } from '@/services/solicitacaoService';
 import { BairroService } from '@/services/bairrosService';
 import { SolicitacaoColeta } from '@/models/solicitacao';
 import { Chart } from '@/components/core/chart';
+import { PesagemResiduosProps } from './pesagem-residuos-wrapper';
 
 const coresResiduos = {
   plastico: '#2FB166',
@@ -31,13 +32,14 @@ const coresResiduos = {
   outros: '#808080',
 };
 
-export function PesagemResiduos() {
+export function PesagemResiduos({ userId }: PesagemResiduosProps) {
   const wasteService = React.useMemo(() => new WasteRecordService(), []);
   const pointsConfigDAO = React.useMemo(() => new PointsConfigDAO(), []);
   const pointsDAO = React.useMemo(() => new PointsDAO(), []);
   const bairroService = React.useMemo(() => new BairroService(), []);
 
   const qtdPadrao = { plastico: 0, papel: 0, vidro: 0, metal: 0, outros: 0 };
+  const valores = { plastico: 15, papel: 10, vidro: 20, metal: 20 };
 
   const [quantidades, setQuantidades] = React.useState<WasteRecord['quantidade']>(qtdPadrao);
   const [registros, setRegistros] = React.useState<WasteRecord[]>([]);
@@ -104,6 +106,7 @@ export function PesagemResiduos() {
   };
 
   const handleSubmit = async () => {
+
     if (!selectedSolicitacao || !selectedBairro || !config) return alert('Selecione solicitação, bairro e verifique a configuração.');
 
     const solicitacao = solicitacoesPendentes.find(s => s.id === selectedSolicitacao);
@@ -145,7 +148,7 @@ export function PesagemResiduos() {
   return (
     <Grid container spacing={3}>
       {/* Configuração de Pontuação */}
-      <Grid size={{xs: 12}}>
+      <Grid size={{ xs: 12 }}>
         <Card sx={{ height: '100%' }}>
           <CardHeader title="Configuração de Pontuação" />
           <CardContent>
@@ -170,7 +173,7 @@ export function PesagemResiduos() {
       </Grid>
 
       {/* Formulário de pesagem */}
-      <Grid size={{xs: 12, md: 6}}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Card sx={{ height: '100%' }}>
           <CardHeader title="Registrar Pesagem" />
           <CardContent>
@@ -224,7 +227,7 @@ export function PesagemResiduos() {
       </Grid>
 
       {/* Métricas e Gráficos */}
-      <Grid size={{xs: 12, md: 6}}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Grid container spacing={1}>
           {/* Métricas */}
           {[
@@ -232,7 +235,7 @@ export function PesagemResiduos() {
             { title: 'Média por Registro', value: metrics.mediaKg.toFixed(2) + ' kg' },
             { title: 'Registros', value: registros.length },
           ].map((card) => (
-            <Grid size={{xs: 12, md: 4}} key={card.title}>
+            <Grid size={{ xs: 12, md: 4 }} key={card.title}>
               <Card>
                 <CardContent>
                   <Typography>{card.title}</Typography>
@@ -243,7 +246,7 @@ export function PesagemResiduos() {
           ))}
 
           {/* Gráfico Pizza */}
-          <Grid size={{xs: 12}}>
+          <Grid size={{ xs: 12 }}>
             <Card>
               <CardHeader title="Distribuição por Tipo" />
               <CardContent>
@@ -269,7 +272,7 @@ export function PesagemResiduos() {
           </Grid>
 
           {/* Gráfico Barras */}
-          <Grid size={{xs: 12}}>
+          <Grid size={{ xs: 12 }}>
             <Card>
               <CardHeader title="Últimos Registros (kg por tipo)" />
               <CardContent>
@@ -298,7 +301,7 @@ export function PesagemResiduos() {
       </Grid>
 
       {/* Tabela de Registros */}
-      <Grid size={{xs: 12, md:12}}>
+      <Grid size={{ xs: 12, md: 12 }}>
         <Card>
           <CardHeader title="Últimos Registros" />
           <CardContent>

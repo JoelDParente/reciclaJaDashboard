@@ -6,6 +6,10 @@ import Typography from '@mui/material/Typography';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { PesagemResiduos } from './pesagem-residuos';
 
+export interface PesagemResiduosProps {
+  userId: string;
+}
+
 export function PesagemResiduosWrapper() {
   const [uid, setUid] = React.useState<string | null>(null);
 

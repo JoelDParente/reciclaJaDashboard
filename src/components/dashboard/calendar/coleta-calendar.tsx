@@ -145,31 +145,39 @@ export function ColetasCalendar() {
   };
 
   // Salvar no Firestore
-  const handleSave = async () => {
-    if (!selectedDate) return;
+ const handleSave = async () => {
+  if (!selectedDate) {
+    console.warn("selectedDate não definido — impossível salvar");
+    return;
+  }
 
-    const bairrosParaSalvar: BairroColeta[] = [];
-    Object.keys(agendamento).forEach((bairro) => {
-      TURNOS.forEach((turno) => {
-        if (agendamento[bairro][turno]) {
-          bairrosParaSalvar.push({ nome: bairro, turno });
-        }
-      });
+  const bairrosParaSalvar: BairroColeta[] = [];
+  Object.keys(agendamento).forEach((bairro) => {
+    TURNOS.forEach((turno) => {
+      if (agendamento[bairro][turno]) {
+        bairrosParaSalvar.push({ nome: bairro, turno });
+      }
     });
+  });
 
-    if (bairrosParaSalvar.length === 0) {
-      alert("Selecione pelo menos um bairro e turno.");
-      return;
-    }
+  if (bairrosParaSalvar.length === 0) {
+    alert("Selecione pelo menos um bairro e turno.");
+    return;
+  }
 
-    try {
-      await setDoc(doc(db, "coletas", selectedDate), { bairros: bairrosParaSalvar });
-    } catch (e) {
-      console.error("Erro ao salvar o agendamento: ", e);
-    }
+  try {
+    // se preferir mesclar com campos existentes use { merge: true }
+    await setDoc(doc(db, "coletas", selectedDate), { bairros: bairrosParaSalvar });
 
+    // fechar modal e limpar estado relevante
     setModalNovoEventoOpen(false);
-  };
+    setSelectedDate(null);
+    setEventData(null);
+    setAgendamento({});
+  } catch (e) {
+    console.error("Erro ao salvar o agendamento: ", e);
+  }
+};
 
   // Excluir evento
   const handleDelete = async () => {
@@ -180,18 +188,20 @@ export function ColetasCalendar() {
 
   // Editar evento -> abre modal de criação preenchido
   const handleEdit = () => {
-    if (!eventData) return;
-    initializeAgendamento(eventData.bairros || []);
-    setModalEventoExistenteOpen(false);
-    setModalNovoEventoOpen(true);
-  };
+  if (!eventData) return;
+  setSelectedDate(eventData.id);
+  initializeAgendamento(eventData.bairros || []);
+  setModalEventoExistenteOpen(false);
+  setModalNovoEventoOpen(true);
+};
 
   // Clique em um evento existente no calendário
   const handleEventClick = (arg: any) => {
-    const data = arg.event.extendedProps;
-    setEventData({ id: arg.event.id, bairros: data.bairros });
-    setModalEventoExistenteOpen(true);
-  };
+  const data = arg.event.extendedProps;
+  setEventData({ id: arg.event.id, bairros: data.bairros });
+  setSelectedDate(arg.event.id); // <-- ADICIONADO: necessário para o save funcionar no modo "editar"
+  setModalEventoExistenteOpen(true);
+};
 
   return (
     <div>
