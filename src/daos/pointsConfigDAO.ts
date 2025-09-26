@@ -1,24 +1,35 @@
-import { PointsConfig } from '@/models/points';
+// src/daos/pointsConfigDAO.ts
 import { db } from '@/firebase/firebaseConfig';
-import { collection, doc, getDocs, setDoc, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { PointsConfig } from '@/models/points';
 
 export class PointsConfigDAO {
-  private collectionRef = collection(db, 'pointsConfig');
+  private configDocRef = doc(db, 'config', 'points'); // path: config/points
 
   async getCurrentConfig(): Promise<PointsConfig | null> {
-    const q = query(this.collectionRef, orderBy('updatedAt', 'desc'), limit(1));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return null;
-    const data = snapshot.docs[0].data();
+    const snap = await getDoc(this.configDocRef);
+    if (!snap.exists()) return null;
+    const data = snap.data() as any;
+    // normalize updatedAt caso venha como Timestamp
+    const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt || new Date();
     return {
-      id: snapshot.docs[0].id,
-      ...data,
-      updatedAt: (data.updatedAt as Timestamp).toDate(),
+      id: snap.id,
+      mode: data.mode,
+      fixedPoints: data.fixedPoints ?? 0,
+      pointsPerKg: data.pointsPerKg ?? 0,
+      materialWeights: data.materialWeights ?? {},
+      updatedAt,
     } as PointsConfig;
   }
 
-  async updateConfig(config: PointsConfig): Promise<void> {
-    const docRef = doc(this.collectionRef, config.id || 'default');
-    await setDoc(docRef, { ...config, updatedAt: new Date() });
+  async saveConfig(cfg: PointsConfig): Promise<void> {
+    const payload = {
+      mode: cfg.mode,
+      fixedPoints: Number(cfg.fixedPoints) || 0,
+      pointsPerKg: Number(cfg.pointsPerKg) || 0,
+      materialWeights: cfg.materialWeights || {},
+      updatedAt: new Date(),
+    };
+    await setDoc(this.configDocRef, payload);
   }
 }
