@@ -39,7 +39,7 @@ export function Traffic({ sx }: TrafficProps): React.JSX.Element {
 
   return (
     <Card sx={sx}>
-      <CardHeader title="Solicitações por Bairro" />
+      <CardHeader title="Solicitações Pendentes" />
       <CardContent>
         <Stack spacing={2}>
 

@@ -8,18 +8,10 @@ import { PesagemResiduos } from './pesagem-residuos';
 
 export interface PesagemResiduosProps {
   userId: string;
-  openModal: boolean;
-  onCloseModal: () => void;
 }
 
-export function PesagemResiduosWrapper({
-  renderConfigButton,
-}: { renderConfigButton?: (open: () => void) => React.ReactNode }) {
+export function PesagemResiduosWrapper() {
   const [uid, setUid] = React.useState<string | null>(null);
-  const [openConfigModal, setOpenConfigModal] = React.useState(false);
-
-  const handleOpen = () => setOpenConfigModal(true);
-  const handleClose = () => setOpenConfigModal(false);
 
   React.useEffect(() => {
     const auth = getAuth(); 
@@ -31,14 +23,5 @@ export function PesagemResiduosWrapper({
 
   if (!uid) return <Typography>Carregando usuário...</Typography>;
 
-  return (
-    <>
-      {/* Botão passado da página */}
-      {renderConfigButton && renderConfigButton(handleOpen)}
-
-      {/* Componente de pesagem */}
-      <PesagemResiduos userId={uid} openModal={openConfigModal} onCloseModal={handleClose} />
-    </>
-  );
+  return <PesagemResiduos userId={uid} />;
 }
-

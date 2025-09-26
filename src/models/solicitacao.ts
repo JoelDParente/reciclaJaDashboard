@@ -7,5 +7,5 @@ export interface SolicitacaoColeta {
   date: Date;           // data da coleta 
   date_string: string;  // string da data (YYYY-MM-DD)
   timestamp: Date;      // timestamp de criação da solicitação
-  status: boolean; //status da solicitação
+  isCompleted: boolean; //status da solicitação
 }

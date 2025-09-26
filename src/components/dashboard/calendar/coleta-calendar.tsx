@@ -35,6 +35,7 @@ import { db } from "@/firebase/firebaseConfig";
 // Importando Service
 import { BairroService } from "@/services/bairrosService";
 import { BairroDoc } from "@/models/bairros";
+import dayjs from 'dayjs';
 
 // Lista fixa só para turnos
 const TURNOS = ["Manhã", "Tarde"] as const;
@@ -272,14 +273,14 @@ export function ColetasCalendar() {
           </Button>
         </DialogActions>
       </Dialog>
-
+ 
       {/* Modal de evento existente */}
       <Dialog
         open={modalEventoExistenteOpen}
         onClose={() => setModalEventoExistenteOpen(false)}
         fullWidth
       >
-        <DialogTitle>Coletas em {eventData?.id}</DialogTitle>
+        <DialogTitle>Coletas em {dayjs(eventData?.id).format('DD/MM/YYYY')}</DialogTitle>
         <DialogContent>
           {eventData?.bairros?.map((b, idx) => (
             <Typography key={idx}>
