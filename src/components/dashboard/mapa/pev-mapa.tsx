@@ -151,7 +151,7 @@ export function MapaColetas() {
           </Box>
         )}
 
-        <MapContainer center={centro} zoom={15} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={centro} zoom={10} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -255,6 +255,65 @@ export function MapaColetas() {
               value={enderecoPonto}
               onChange={(e) => setEnderecoPonto(e.target.value)}
             />
+            {/* Modal para adicionar novo PEV */}
+            <Dialog open={!!novoPonto} onClose={() => setNovoPonto(null)}>
+              <DialogTitle>Adicionar PEV</DialogTitle>
+              <Grid container spacing={2}>
+                <DialogContent>
+                  <TextField
+                    fullWidth
+                    label="Nome do PEV"
+                    color="success"
+                    value={nomePonto}
+                    onChange={(e) => setNomePonto(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Endereço"
+                    color="success"
+                    value={enderecoPonto}
+                    onChange={(e) => setEnderecoPonto(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Latitude"
+                    color="success"
+                    value={novoPonto?.lat ?? ""}
+                    onChange={(e) =>
+                      setNovoPonto((prev) => ({
+                        lat: parseFloat(e.target.value) || 0,
+                        lng: prev?.lng ?? 0,
+                      }))
+                    }
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Longitude"
+                    color="success"
+                    value={novoPonto?.lng ?? ""}
+                    onChange={(e) =>
+                      setNovoPonto((prev) => ({
+                        lat: prev?.lat ?? 0,
+                        lng: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                </DialogContent>
+              </Grid>
+              <DialogActions>
+                <Button onClick={() => setNovoPonto(null)} color="inherit">
+                  Cancelar
+                </Button>
+                <Button onClick={handleSalvarPonto} variant="contained" color="success">
+                  Salvar
+                </Button>
+              </DialogActions>
+            </Dialog>
           </DialogContent>
         </Grid>
         <DialogActions>
@@ -268,54 +327,54 @@ export function MapaColetas() {
       </Dialog>
 
       {/* Modal para editar PEV */}
-        <Dialog open={!!pontoEdicao} onClose={() => setPontoEdicao(null)}>
-          <DialogTitle>Editar PEV</DialogTitle>
-          <Grid container spacing={2}>
-            <DialogContent>
-              {/* Nome agora é editável */}
-              <TextField
-                fullWidth
-                label="Nome do PEV"
-                color="success"
-                value={pontoEdicao?.nome ?? ""}
-                onChange={(e) =>
-                  setPontoEdicao((prev) => (prev ? { ...prev, nome: e.target.value } : prev))
-                }
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label="Endereço"
-                color="success"
-                value={pontoEdicao?.endereco ?? ""}
-                onChange={(e) =>
-                  setPontoEdicao((prev) => (prev ? { ...prev, endereco: e.target.value } : prev))
-                }
-                sx={{ mb: 2 }}
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={pontoEdicao?.operacional ?? true}
-                    color="success"
-                    onChange={(e) =>
-                      setPontoEdicao((prev) => (prev ? { ...prev, operacional: e.target.checked } : prev))
-                    }
-                  />
-                }
-                label="Operacional"
-              />
-            </DialogContent>
-          </Grid>
-          <DialogActions>
-            <Button onClick={() => setPontoEdicao(null)} color="inherit">
-              Cancelar
-            </Button>
-            <Button onClick={handleSalvarEdicao} variant="contained" color="success">
-              Salvar
-            </Button>
-          </DialogActions>
-        </Dialog>
+      <Dialog open={!!pontoEdicao} onClose={() => setPontoEdicao(null)}>
+        <DialogTitle>Editar PEV</DialogTitle>
+        <Grid container spacing={2}>
+          <DialogContent>
+            {/* Nome agora é editável */}
+            <TextField
+              fullWidth
+              label="Nome do PEV"
+              color="success"
+              value={pontoEdicao?.nome ?? ""}
+              onChange={(e) =>
+                setPontoEdicao((prev) => (prev ? { ...prev, nome: e.target.value } : prev))
+              }
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Endereço"
+              color="success"
+              value={pontoEdicao?.endereco ?? ""}
+              onChange={(e) =>
+                setPontoEdicao((prev) => (prev ? { ...prev, endereco: e.target.value } : prev))
+              }
+              sx={{ mb: 2 }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={pontoEdicao?.operacional ?? true}
+                  color="success"
+                  onChange={(e) =>
+                    setPontoEdicao((prev) => (prev ? { ...prev, operacional: e.target.checked } : prev))
+                  }
+                />
+              }
+              label="Operacional"
+            />
+          </DialogContent>
+        </Grid>
+        <DialogActions>
+          <Button onClick={() => setPontoEdicao(null)} color="inherit">
+            Cancelar
+          </Button>
+          <Button onClick={handleSalvarEdicao} variant="contained" color="success">
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar de feedback */}
       <Snackbar

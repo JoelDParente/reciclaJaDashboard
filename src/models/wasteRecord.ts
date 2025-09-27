@@ -14,5 +14,6 @@ export interface WasteRecord {
   quantidade: Quantidades;
   totalKg: number;
   pontos: number;
+  co2Evited: number;
   dataRegistro: Date;
 }

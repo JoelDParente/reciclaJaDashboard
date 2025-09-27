@@ -7,12 +7,13 @@ const db = getFirestore();
 
 export const UserService = {
 
-   async incrementUserTotals(userId: string, totalKg: number, pontos: number) {
+   async incrementUserTotals(userId: string, totalKg: number, pontos: number,co2Evited: number) {
     const userRef = doc(db, 'users', userId);
 
     await updateDoc(userRef, {
       totalKg: increment(totalKg),
       points: increment(pontos),
+      co2Evited: increment(co2Evited),
     });
   },
 

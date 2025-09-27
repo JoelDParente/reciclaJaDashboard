@@ -30,6 +30,7 @@ import { SolicitacaoColeta } from '@/models/solicitacao';
 import { Chart } from '@/components/core/chart';
 import { PesagemResiduosProps } from './pesagem-residuos-wrapper';
 import { PointsConfigModal } from './PointsConfigModal';
+import { Quantidades } from '@/models/wasteRecord';
 import dayjs, { Dayjs } from 'dayjs';
 
 
@@ -126,6 +127,7 @@ export function PesagemResiduos({ userId }: PesagemResiduosProps) {
 
     const dataAtendimento = new Date();
     const dateString = solicitacao.date_string || dataAtendimento.toISOString().split('T')[0];
+    const co2Evited = WasteRecordService.calcularCO2(quantidades);
 
     const novoRegistro: Omit<WasteRecord, 'id'> & { date_string: string } = {
       userId: solicitacao.userId,
@@ -134,6 +136,7 @@ export function PesagemResiduos({ userId }: PesagemResiduosProps) {
       dataRegistro: dataAtendimento,
       date_string: dateString, // <-- sempre terá valor
       quantidade: quantidades,
+      co2Evited: co2Evited,
       totalKg: totalKgForm,
       pontos,
     };
@@ -194,7 +197,7 @@ export function PesagemResiduos({ userId }: PesagemResiduosProps) {
   return (
     <Grid container spacing={4}>
       {/* Botão para abrir modal de configuração */}
-      <Grid size={{xs:12, md: 12}}>
+      <Grid size={{ xs: 12, md: 12 }}>
         <Card>
           <CardHeader
             sx={{
@@ -216,7 +219,7 @@ export function PesagemResiduos({ userId }: PesagemResiduosProps) {
               </Stack>
             }
             action={
-            <Button variant="contained" color="success" onClick={() => setOpenConfig(true)}> Configurar </Button>
+              <Button variant="contained" color="success" onClick={() => setOpenConfig(true)}> Configurar </Button>
             }
           />
         </Card>
@@ -274,6 +277,9 @@ export function PesagemResiduos({ userId }: PesagemResiduosProps) {
 
             <Typography sx={{ mt: 2 }}>Total: {totalKgForm.toFixed(2)} kg</Typography>
             <Typography sx={{ mt: 1 }}>Pontos previstos: <strong>{previewPoints}</strong></Typography>
+            <Typography sx={{ mt: 1 }}>
+              CO₂ evitado previsto: <strong>{WasteRecordService.calcularCO2(quantidades).toFixed(2)} kg</strong>
+            </Typography>
 
             <Button fullWidth variant="contained" color="success" sx={{ mt: 3 }}
               onClick={handleSubmit} disabled={!selectedSolicitacao || !selectedBairro}>

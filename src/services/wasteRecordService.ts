@@ -11,11 +11,33 @@ export class WasteRecordService {
   private globalDAO = new GlobalWasteRecordDAO();
   private summaryDAO = new SummaryDAO();
 
+  // fatores médios de CO₂ evitado (kg CO₂e / kg reciclado)
+  private static FACTORS: Record<keyof Quantidades, number> = {
+    plastico: 1.5,
+    papel: 1.3,
+    vidro: 0.3,
+    metal: 4.0,
+    outros: 0.2,
+  };
+
+  // Calcula CO₂ evitado
+  static calcularCO2(quantidade: Quantidades): number {
+    return Object.keys(WasteRecordService.FACTORS).reduce((acc, key) => {
+      const tipo = key as keyof Quantidades;
+      return acc + quantidade[tipo] * WasteRecordService.FACTORS[tipo];
+    }, 0);
+  }
+
+  // Registra um novo descarte, sempre salvando co2Evited
   async registrar(userId: string, record: Omit<WasteRecord, 'id'>): Promise<string> {
-    // 1. Registro individual do usuário
-    const docId = await this.dao.create(userId, record);
-    await UserService.incrementUserTotals(userId, record.totalKg, record.pontos);
-    await this.globalDAO.create(record);
+    const recordWithCO2: Omit<WasteRecord, 'id'> = {
+      ...record,
+      co2Evited: WasteRecordService.calcularCO2(record.quantidade),
+    };
+
+    const docId = await this.dao.create(userId, recordWithCO2);
+    await UserService.incrementUserTotals(userId, record.totalKg, record.pontos, recordWithCO2.co2Evited);
+    await this.globalDAO.create(recordWithCO2);
     await this.summaryDAO.incrementTotals(record.totalKg, record.pontos);
 
     return docId;
@@ -26,19 +48,15 @@ export class WasteRecordService {
   }
 
   async calcularTotais(records: WasteRecord[]): Promise<Quantidades> {
-    const totais: Quantidades = { plastico: 0, papel: 0, vidro: 0, metal: 0, outros: 0 };
-    records.forEach(r => {
-      for (const [tipo, valor] of Object.entries(r.quantidade)) {
-        if (tipo in totais) {
-          totais[tipo as keyof Quantidades] += valor;
-        }
+    return records.reduce((totais, r) => {
+      for (const tipo of Object.keys(r.quantidade) as (keyof Quantidades)[]) {
+        totais[tipo] += r.quantidade[tipo];
       }
-    });
-    return totais;
+      return totais;
+    }, { plastico: 0, papel: 0, vidro: 0, metal: 0, outros: 0 } as Quantidades);
   }
 
   async getAllRecords(): Promise<WasteRecord[]> {
-    // se admin, consulta todos os usuários
     const snapshot = await getDocs(collectionGroup(db, 'registro_descarte_global'));
     return snapshot.docs.map(doc => {
       const data = doc.data();
@@ -50,14 +68,17 @@ export class WasteRecordService {
     });
   }
 
-  async getTotais(records: WasteRecord[]) {
-    const totais: Quantidades = { plastico: 0, papel: 0, vidro: 0, metal: 0, outros: 0 };
-    records.forEach(r => {
-      for (const tipo of Object.keys(totais)) {
-        totais[tipo as keyof Quantidades] += r.quantidade[tipo as keyof Quantidades];
+  async getTotais(records: WasteRecord[]): Promise<Quantidades> {
+    return records.reduce((totais, r) => {
+      for (const tipo of Object.keys(totais) as (keyof Quantidades)[]) {
+        totais[tipo] += r.quantidade[tipo];
       }
-    });
-    return totais;
+      return totais;
+    }, { plastico: 0, papel: 0, vidro: 0, metal: 0, outros: 0 } as Quantidades);
   }
 
+  // Soma total de CO₂ evitado de todos os registros
+  async getCO2Total(records: WasteRecord[]): Promise<number> {
+    return records.reduce((acc, r) => acc + (r.co2Evited || 0), 0);
+  }
 }

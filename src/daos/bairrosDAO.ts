@@ -38,10 +38,16 @@ export class BairroDAO {
   }
 
   // Adicionar bairro ao array da cidade
-  async addBairro(cidadeId: string, bairro: string): Promise<void> {
+ async addBairro(cidadeId: string, bairro: string): Promise<void> {
     const docRef = doc(this.collectionRef, cidadeId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) throw new Error('Cidade não encontrada');
+
+    const data = docSnap.data();
+    const cidadeKey = Object.keys(data)[0]; // exemplo: "Morada Nova"
+
     await updateDoc(docRef, {
-      [cidadeId]: arrayUnion(bairro),
+      [cidadeKey]: arrayUnion(bairro),
     });
   }
 
