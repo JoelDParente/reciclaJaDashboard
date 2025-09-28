@@ -1,5 +1,5 @@
 import { db } from "@/firebase/firebaseConfig";
-import { collection, addDoc, getDocs, getDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, getDoc, doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { User } from "@/models/user";
 
 const userCollection = collection(db, "users");
@@ -51,5 +51,24 @@ export class UserDAO {
     });
 
     return total;
+  }
+
+  // 🔹 Listener do número de usuários
+  listenUserCount(callback: (count: number) => void): () => void {
+    return onSnapshot(userCollection, (snapshot) => {
+      callback(snapshot.size);
+    });
+  }
+
+  // 🔹 Listener da soma de pontos de todos os usuários
+  listenTotalPoints(callback: (total: number) => void): () => void {
+    return onSnapshot(userCollection, (snapshot) => {
+      let total = 0;
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        total += (data.points ?? 0);
+      });
+      callback(total);
+    });
   }
 }
