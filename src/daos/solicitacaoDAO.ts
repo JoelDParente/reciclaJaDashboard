@@ -9,7 +9,8 @@ import {
   deleteDoc,
   query,
   where,
-  Timestamp
+  Timestamp,
+  onSnapshot,
 } from "firebase/firestore";
 import { SolicitacaoColeta } from "@/models/solicitacao";
 
@@ -77,5 +78,64 @@ export class SolicitacaoDAO {
         timestamp: data.timestamp.toDate(),
       } as SolicitacaoColeta;
     });
+  }
+
+  listenTotalRequests(callback: (count: number) => void): () => void {
+    const unsubscribe = onSnapshot(this.collectionRef, (snapshot) => {
+      callback(snapshot.size);
+    });
+    return unsubscribe;
+  }
+
+  listenAllRequests(callback: (requests: SolicitacaoColeta[]) => void) {
+    const unsubscribe = onSnapshot(this.collectionRef, (snapshot) => {
+      const allRequests: SolicitacaoColeta[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          date: data.date?.toDate?.() ?? new Date(),
+        } as SolicitacaoColeta;
+      });
+      callback(allRequests);
+    });
+
+    return unsubscribe;
+  }
+
+  listenMonthlyEvolution(callback: (monthlyData: number[]) => void): () => void {
+    const unsubscribe = onSnapshot(this.collectionRef, (snapshot) => {
+      const months = Array(12).fill(0); // Jan a Dez
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const date: Date = data.date?.toDate?.() ?? new Date(); // usar data da solicitação
+        const monthIndex = date.getMonth(); // 0 = Jan
+        months[monthIndex] += 1;
+      });
+
+      callback(months);
+    });
+
+    return unsubscribe;
+  }
+
+  listenRequestsByBairro(callback: (data: { labels: string[]; chartSeries: number[] }) => void) {
+    const unsubscribe = onSnapshot(this.collectionRef, (snapshot) => {
+      const agrupado: Record<string, number> = {};
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const bairro = data.bairro ?? "Desconhecido";
+        agrupado[bairro] = (agrupado[bairro] || 0) + 1;
+      });
+
+      callback({
+        labels: Object.keys(agrupado),
+        chartSeries: Object.values(agrupado),
+      });
+    });
+
+    return unsubscribe;
   }
 }

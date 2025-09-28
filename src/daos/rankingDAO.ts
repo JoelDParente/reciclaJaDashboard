@@ -1,5 +1,5 @@
 import { db } from "@/firebase/firebaseConfig";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, getDocs } from "firebase/firestore";
 import { Ranking } from "@/models/ranking";
 
 export class RankingDAO {
@@ -16,5 +16,21 @@ export class RankingDAO {
       nome: doc.data().nome || "Sem nome",
       pontos: doc.data().points ?? 0
     })) as Ranking[];
+  }
+
+  // 🔹 Listener em tempo real
+  listenRanking(callback: (ranking: Ranking[]) => void) {
+    const q = query(this.usersCollection(), orderBy("points", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ranking: Ranking[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        nome: doc.data().nome || "Sem nome",
+        pontos: doc.data().points ?? 0
+      }));
+      callback(ranking);
+    });
+
+    return unsubscribe; // permite cancelar o listener
   }
 }

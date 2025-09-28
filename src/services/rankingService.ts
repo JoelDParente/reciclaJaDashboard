@@ -15,5 +15,9 @@ export const RankingService = {
 
     if (topN) return ranked.slice(0, topN);
     return ranked;
+  },
+
+  listenRankingGlobal: (callback: (ranking: Ranking[]) => void) => {
+    return rankingDao.listenRanking(callback);
   }
 };

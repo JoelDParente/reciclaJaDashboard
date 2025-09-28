@@ -7,31 +7,28 @@ import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { UsersIcon } from "@phosphor-icons/react/dist/ssr/Users";
-import { UserService } from "@/services/userService";
+import { UserDAO } from "@/daos/userDAO"; // importa o DAO
 
 export function TotalCustomers(): React.JSX.Element {
   const [total, setTotal] = React.useState<number>(0);
 
   React.useEffect(() => {
-    const fetchTotal = async () => {
-      try {
-        const totalUsers = await UserService.getTotalUsers();
-        setTotal(totalUsers);
-      } catch (error) {
-        console.error("Erro ao buscar total de usuários:", error);
-      }
-    };
+    const userDAO = new UserDAO();
 
-    fetchTotal();
+    // 🔹 Ativa o listener em tempo real
+    const unsubscribe = userDAO.listenUserCount(setTotal);
+
+    // 🔹 Desliga o listener quando o componente desmontar
+    return () => unsubscribe();
   }, []);
 
   return (
     <Card>
       <CardContent
-      sx={{
-        boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
-        borderRadius: "10px",
-      }}
+        sx={{
+          boxShadow: "rgba(0, 0, 0, 0.35) 0px 5px 15px",
+          borderRadius: "10px",
+        }}
       >
         <Stack spacing={2}>
           <Stack

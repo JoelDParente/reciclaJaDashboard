@@ -19,10 +19,7 @@ import {
   TablePagination,
 } from '@mui/material';
 import type { SxProps } from '@mui/material/styles';
-import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
-import { DotsThreeVerticalIcon } from '@phosphor-icons/react/dist/ssr/DotsThreeVertical';
 import { TrophyIcon } from '@phosphor-icons/react/dist/ssr/Trophy';
-import dayjs from 'dayjs';
 
 import { RankingService } from '@/services/rankingService';
 
@@ -45,21 +42,25 @@ export function RankingTable({ sx }: RankingTableProps): React.JSX.Element {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  useEffect(() => {
-    async function fetchRanking() {
-      setLoading(true);
-      try {
-        const ranking = await RankingService.getRankingGlobal();
-        setUsers(ranking as UserRanking[]);
-      } catch (error) {
-        console.error("Falha ao buscar o ranking:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+React.useEffect(() => {
+  let firstLoad = true; // flag para atualizar o loading apenas na primeira vez
 
-    fetchRanking();
-  }, []);
+  const unsubscribe = RankingService.listenRankingGlobal((ranking) => {
+    const rankingWithPos = ranking.map((user, idx) => ({
+      ...user,
+      posicao: idx + 1
+    }));
+    setUsers(rankingWithPos);
+
+    if (firstLoad) {
+      setLoading(false); // desativa loading na primeira atualização
+      firstLoad = false;
+    }
+  });
+
+  return () => unsubscribe(); // limpa listener ao desmontar
+}, []);
+
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);

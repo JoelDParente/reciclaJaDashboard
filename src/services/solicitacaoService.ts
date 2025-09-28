@@ -58,4 +58,20 @@ export const SolicitacaoService = {
       chartSeries: Object.values(agrupado),
     };
   },
+
+  listenTotalSolicitacoes(callback: (count: number) => void) {
+    return solicitacaoDao.listenTotalRequests(callback);
+  },
+
+  listenMonthlyEvolution(callback: (monthlyData: number[]) => void) {
+    return solicitacaoDao.listenMonthlyEvolution(callback);
+  },
+
+  listenSolicitacoesByBairro(callback: (data: { labels: string[]; chartSeries: number[] }) => void) {
+    return solicitacaoDao.listenRequestsByBairro(callback);
+  },
+
+  listenAllSolicitacoes(callback: (requests: SolicitacaoColeta[]) => void) {
+    return solicitacaoDao.listenAllRequests(callback);
+  },
 };

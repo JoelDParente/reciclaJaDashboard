@@ -16,6 +16,8 @@ import { SxProps } from '@mui/system';
 import { TablePagination } from '@mui/material';
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
 import dayjs from 'dayjs';
+
+import { Timestamp } from 'firebase/firestore';
  
 import { SolicitacaoService } from '@/services/solicitacaoService';
 import { UserService } from '@/services/userService';
@@ -41,38 +43,39 @@ export function LatestRequests(_sx: any): React.JSX.Element {
     page * rowsPerPage + rowsPerPage
   );
 
-  React.useEffect(() => {
-    const fetchRequests = async () => {
-      const solicitacoes = await SolicitacaoService.getAllSolicitacoes();
+React.useEffect(() => {
+  const unsubscribe = SolicitacaoService.listenAllSolicitacoes(async (solicitacoes) => {
+    const rows: RequestRow[] = [];
 
-      const rows: RequestRow[] = [];
+    for (const s of solicitacoes) {
+      let userName = "Desconhecido";
+      let bairro = "---";
 
-      for (const s of solicitacoes) {
-        let userName = "Desconhecido";
-        let bairro = "---";
-
-        if (s.userId) {
-          const user = await UserService.getUser(s.userId);
-          if (user) {
-            userName = user.nome;
-            bairro = user.endereco?.bairro ?? "---";
-          }
+      if (s.userId) {
+        const user = await UserService.getUser(s.userId);
+        if (user) {
+          userName = user.nome;
+          bairro = user.endereco?.bairro ?? "---";
         }
-
-        rows.push({
-          id: s.id!,
-          userName,
-          bairro,
-          createdAt: s.date_string,
-        });
       }
 
-      setRequests(rows);
+      rows.push({
+        id: s.id!,
+        userName,
+        bairro,
+        createdAt: s.timestamp
+          ? (s.timestamp instanceof Timestamp
+              ? s.timestamp.toDate().toISOString()
+              : (s.timestamp as Date).toISOString())
+          : new Date().toISOString()
+      });
+    }
 
-    };
+    setRequests(rows);
+  });
 
-    fetchRequests();
-  }, []);
+  return () => unsubscribe(); // limpa o listener ao desmontar
+}, []);
 
   return (
 

@@ -22,12 +22,12 @@ export function Sales({ sx }: SalesProps): React.JSX.Element {
   const [chartSeries, setChartSeries] = React.useState<{ name: string; data: number[] }[]>([]);
 
   React.useEffect(() => {
-    const loadData = async () => {
-      const monthlyData = await SolicitacaoService.fetchMonthlyEvolution();
-      setChartSeries([{ name: 'Coletas', data: monthlyData }]);
-    };
-    loadData();
-  }, []);
+  const unsubscribe = SolicitacaoService.listenMonthlyEvolution((monthlyData) => {
+    setChartSeries([{ name: 'Coletas', data: monthlyData }]);
+  });
+
+  return () => unsubscribe();
+}, []);
 
 
   return (

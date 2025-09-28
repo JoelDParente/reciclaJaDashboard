@@ -10,19 +10,11 @@ import { BellRinging } from "@phosphor-icons/react/dist/ssr/BellRinging";
 import { SolicitacaoService } from "@/services/solicitacaoService";
 
 export function Budget(): React.JSX.Element {
-  const [total, setTotal] = React.useState<number>(0);
+  const [total, setTotal] = React.useState(0);
 
   React.useEffect(() => {
-    const fetchTotal = async () => {
-      try {
-        const count = await SolicitacaoService.countSolicitacoes();
-        setTotal(count);
-      } catch (error) {
-        console.error("Erro ao buscar total de solicitações:", error);
-      }
-    };
-
-    fetchTotal();
+    const unsubscribe = SolicitacaoService.listenTotalSolicitacoes(setTotal);
+    return () => unsubscribe();
   }, []);
 
   return (

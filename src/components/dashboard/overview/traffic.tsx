@@ -28,14 +28,13 @@ export function Traffic({ sx }: TrafficProps): React.JSX.Element {
   const chartOptions = useChartOptions(labels, selectedBairro);
 
   useEffect(() => {
-    async function carregar() {
-      const { labels, chartSeries } =
-        await SolicitacaoService.getSolicitacoesByBairro();
-      setLabels(labels);
-      setChartSeries(chartSeries);
-    }
-    carregar();
-  }, []);
+  const unsubscribe = SolicitacaoService.listenSolicitacoesByBairro(({ labels, chartSeries }) => {
+    setLabels(labels);
+    setChartSeries(chartSeries);
+  });
+
+  return () => unsubscribe();
+}, []);
 
   return (
     <Card sx={sx}>
