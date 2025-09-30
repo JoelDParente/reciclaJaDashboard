@@ -46,27 +46,38 @@ export function SignInForm(): React.JSX.Element {
     formState: { errors },
   } = useForm<Values>({ resolver: zodResolver(schema) });
 
-  const onSubmit = React.useCallback(
-    async (values: Values): Promise<void> => {
-      setIsPending(true);
+ const onSubmit = React.useCallback(
+  async (values: Values): Promise<void> => {
+    setIsPending(true);
 
-      const { error } = await authClient.signInWithPassword(values);
+    const { error } = await authClient.signInWithPassword(values);
 
-      if (error) {
-        setError('root', { type: 'server', message: error });
-        setIsPending(false);
-        return;
+    if (error) {
+      // Mensagem amigável
+      let friendlyMessage = 'Não foi possível fazer login. Verifique seu email e senha.';
+      
+      // Exemplo: se quiser tratar casos específicos do Firebase
+      if (error.includes('user-not-found')) {
+        friendlyMessage = 'Usuário não encontrado. Verifique seu email.';
+      } else if (error.includes('invalid-password')) {
+        friendlyMessage = 'Senha incorreta. Tente novamente.';
       }
 
-      // Refresh the auth state
-      await checkSession?.();
+      setError('root', { type: 'server', message: friendlyMessage });
+      setIsPending(false);
+      return;
+    }
 
-      // UserProvider, for this case, will not refresh the router
-      // After refresh, GuestGuard will handle the redirect
-      router.refresh();
-    },
-    [checkSession, router, setError]
-  );
+    // Refresh the auth state
+    await checkSession?.();
+
+    // UserProvider, for this case, will not refresh the router
+    // After refresh, GuestGuard will handle the redirect
+    router.refresh();
+  },
+  [checkSession, router, setError]
+);
+
 
   return (
     <Box
@@ -105,7 +116,7 @@ export function SignInForm(): React.JSX.Element {
                     color="success"
                     label="Email"
                     type="email" />
-                  {errors.email ? <FormHelperText>{errors.email.message}</FormHelperText> : null}
+                  {errors.email ? <FormHelperText>Email ou senha incorretos</FormHelperText> : null}
                 </FormControl>
               )}
             />
@@ -155,11 +166,6 @@ export function SignInForm(): React.JSX.Element {
                 </FormControl>
               )}
             />
-            <div>
-              <Link component={RouterLink} href={paths.auth.resetPassword} variant="subtitle2" color="success">
-                Esqueci minha senha
-              </Link>
-            </div>
             {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
             <Button disabled={isPending} type="submit" variant="contained" color="success">
               Login
