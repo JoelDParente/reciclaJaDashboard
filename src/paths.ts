@@ -10,6 +10,7 @@ export const paths = {
     calendar: '/dashboard/calendar',
     mapa: '/dashboard/mapa',
     pesagem: '/dashboard/pesagem',
+    cards: '/dashboard/cards',
   },
   errors: { notFound: '/errors/not-found' },
 } as const;

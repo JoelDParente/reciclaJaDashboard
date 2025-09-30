@@ -9,11 +9,13 @@ import { Recycle } from '@phosphor-icons/react/dist/ssr/Recycle';
 import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
 import { Scales } from '@phosphor-icons/react/dist/ssr/Scales';
 import { Warning } from '@phosphor-icons/react/dist/ssr/Warning';
+import { Cards } from '@phosphor-icons/react/dist/ssr/Cards';
 
 export const navIcons = {
   'calendar-month': CalendarDotsIcon,
   'chart-pie': ChartPieIcon,
   'gear-six': GearSixIcon,
+  'card': Cards,
   'plugs-connected': PlugsConnectedIcon,
   'x-square': XSquare,
   'map': Recycle,
