@@ -8,8 +8,6 @@ export class PointsDAO {
   }
 
   async create(userId: string, record: Omit<PointsRecord, 'id'>): Promise<string> {
-    // Corrigido: Assegurar que 'createdAt' seja um Timestamp antes de enviar ao Firestore.
-    // Já que `record.createdAt` é um `Date` (como definido em `addUserPoints`), a conversão é necessária.
     const docRef = await addDoc(this.collectionRef(userId), {
       ...record,
       createdAt: Timestamp.fromDate(record.createdAt),
@@ -21,18 +19,17 @@ export class PointsDAO {
   private mapDocToPointsRecord(doc: DocumentData): PointsRecord {
     const data = doc.data();
     
-    // Garante que 'createdAt' exista e seja convertido corretamente de Timestamp para Date.
     const createdAt = data.createdAt instanceof Timestamp 
       ? data.createdAt.toDate() 
-      : new Date(); // Fallback seguro, se por algum motivo não for um Timestamp.
+      : new Date();
       
     return {
       id: doc.id,
-      userId: data.userId, // Adicionado para clareza, se necessário no modelo
+      userId: data.userId,
       totalPoints: data.totalPoints,
       reason: data.reason,
       createdAt: createdAt,
-    } as PointsRecord; // O `as` aqui é mais seguro após a validação.
+    } as PointsRecord;
   }
 
   async findByUser(userId: string): Promise<PointsRecord[]> {

@@ -4,3 +4,7 @@
 - Instale as dependências: `npm install`
 - Inicie o server: `npm run dev`
 - Abra o navegador em: `http://localhost:3000`
+
+## Conexão
+- Crie um repositório local: `git init`
+- Conecte ao repositório remoto: `git remote add origin https://github.com/JoelDParente/reciclaJaDashboard.git`

@@ -67,6 +67,8 @@ export function MapaColetas() {
   const [operacional, setOperacional] = useState(true);
   const [feedback, setFeedback] = useState<{ tipo: "success" | "error"; mensagem: string } | null>(null);
   const [pontoEdicao, setPontoEdicao] = useState<Ponto | null>(null);
+  const [pontoExclusao, setPontoExclusao] = useState<Ponto | null>(null);
+
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "coordenadas_mapa"), (snap) => {
@@ -94,10 +96,17 @@ export function MapaColetas() {
     }
   };
 
-  const handleExcluirPonto = async (id: string) => {
-    await deleteDoc(doc(db, "coordenadas_mapa", id));
-    setFeedback({ tipo: "success", mensagem: "PEV excluído com sucesso!" });
-  };
+const handleExcluirPonto = async (id: string) => {
+  try {
+    const docRef = doc(db, "pontosColeta", id);
+    await deleteDoc(docRef);
+    console.log("Ponto excluído com sucesso!");
+  } catch (error) {
+    console.error("Erro ao excluir ponto:", error);
+  }
+};
+
+
 
   const handleSalvarEdicao = async () => {
     if (pontoEdicao) {
@@ -166,10 +175,11 @@ export function MapaColetas() {
               icon={p.operacional ? PEVIcon : PEVIconInoperante}
               eventHandlers={{
                 click: () => {
-                  if (modo === "exclusao") handleExcluirPonto(p.id);
+                  if (modo === "exclusao") setPontoExclusao(p);
                   if (modo === "visualizacao") setPontoEdicao(p);
                 },
               }}
+
             >
               <Tooltip>{p.nome}</Tooltip>
               <Popup>
@@ -322,6 +332,33 @@ export function MapaColetas() {
           </Button>
           <Button onClick={handleSalvarPonto} variant="contained" color="success">
             Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de confirmação de exclusão */}
+      <Dialog open={!!pontoExclusao} onClose={() => setPontoExclusao(null)}>
+        <DialogTitle>Confirmar exclusão</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tem certeza que deseja excluir o PEV <strong>{pontoExclusao?.nome}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPontoExclusao(null)} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            onClick={async () => {
+              if (pontoExclusao) {
+                await handleExcluirPonto(pontoExclusao.id);
+                setPontoExclusao(null);
+              }
+            }}
+            variant="contained"
+            color="error"
+          >
+            Excluir
           </Button>
         </DialogActions>
       </Dialog>

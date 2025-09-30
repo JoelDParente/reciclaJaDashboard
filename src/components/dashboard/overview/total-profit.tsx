@@ -20,12 +20,17 @@ export function TotalProfit({ sx }: TotalProfitProps): React.JSX.Element {
   const [totalPoints, setTotalPoints] = useState<number>(0);
 
   useEffect(() => {
-    async function loadTotalPoints() {
-      const dao = new UserDAO();
-      const total = await dao.sumAllPoints();
+    const dao = new UserDAO();
+
+    // registra o listener em tempo real
+    const unsubscribe = dao.listenTotalPoints((total) => {
       setTotalPoints(total);
-    }
-    loadTotalPoints();
+    });
+
+    // remove o listener quando desmontar o componente
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return (

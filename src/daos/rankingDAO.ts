@@ -18,7 +18,6 @@ export class RankingDAO {
     })) as Ranking[];
   }
 
-  // 🔹 Listener em tempo real
   listenRanking(callback: (ranking: Ranking[]) => void) {
     const q = query(this.usersCollection(), orderBy("points", "desc"));
 
