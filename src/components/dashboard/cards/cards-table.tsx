@@ -130,7 +130,7 @@ export function CardsTable(): React.JSX.Element {
               required
               multiline
               minRows={3}
-              inputProps={{ maxLength: 250 }}
+              inputProps={{ maxLength: 100 }}
             />
             <FormControl fullWidth>
               <InputLabel color="success">Categoria</InputLabel>
