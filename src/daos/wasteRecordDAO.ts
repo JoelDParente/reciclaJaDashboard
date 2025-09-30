@@ -10,6 +10,8 @@ import {
   where,
   Timestamp,
   collectionGroup,
+  onSnapshot,
+  QuerySnapshot
 } from 'firebase/firestore';
 
 export class WasteRecordDAO {
@@ -17,6 +19,7 @@ export class WasteRecordDAO {
   private collectionRef(userId: string) {
     return collection(db, `users/${userId}/historico_registro`);
   }
+
 
   /** Cria um novo registro de pesagem para o usuário */
   async create(userId: string, record: Omit<WasteRecord, 'id'>): Promise<string> {

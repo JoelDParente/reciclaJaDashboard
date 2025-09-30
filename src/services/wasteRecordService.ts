@@ -1,10 +1,10 @@
 import { WasteRecord, Quantidades } from '@/models/wasteRecord';
 import { WasteRecordDAO } from '@/daos/wasteRecordDAO';
-import { Timestamp, getDocs, collectionGroup } from 'firebase/firestore';
+import { Timestamp, getDocs, collectionGroup, doc, updateDoc, onSnapshot, collection } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 import { GlobalWasteRecordDAO } from '@/daos/globalWasteRecordDAO';
 import { SummaryDAO } from '@/daos/summaryDAO';
-import { UserService } from './userService';  
+import { UserService } from './userService';
 
 export class WasteRecordService {
   private dao = new WasteRecordDAO();
@@ -80,5 +80,29 @@ export class WasteRecordService {
   // Soma total de CO₂ evitado de todos os registros
   async getCO2Total(records: WasteRecord[]): Promise<number> {
     return records.reduce((acc, r) => acc + (r.co2Evited || 0), 0);
+  }
+
+  async atualizarUserNameEmRegistros() {
+    try {
+      const query = collectionGroup(db, 'registro_descarte_global');
+      const snapshot = await getDocs(query);
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data() as WasteRecord;
+
+        // Se o registro já tiver userName, ignora
+        if (data.userName) continue;
+
+        // Busca o usuário pelo ID
+        const user = await UserService.getUser(data.userId);
+        if (user?.nome) {
+          // Atualiza o documento com o userName
+          await updateDoc(doc(db, docSnap.ref.path), { userName: user.nome });
+          console.log(`Registro ${docSnap.id} atualizado com userName: ${user.nome}`);
+        }
+      }
+      console.log('Todos os registros foram verificados e atualizados.');
+    } catch (err) {
+      console.error('Erro ao atualizar registros com userName:', err);
+    }
   }
 }

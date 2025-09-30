@@ -96,17 +96,15 @@ export function MapaColetas() {
     }
   };
 
-const handleExcluirPonto = async (id: string) => {
-  try {
-    const docRef = doc(db, "pontosColeta", id);
-    await deleteDoc(docRef);
-    console.log("Ponto excluído com sucesso!");
-  } catch (error) {
-    console.error("Erro ao excluir ponto:", error);
-  }
-};
-
-
+  const handleExcluirPonto = async (id: string) => {
+    try {
+      const docRef = doc(db, "pontosColeta", id);
+      await deleteDoc(docRef);
+      console.log("Ponto excluído com sucesso!");
+    } catch (error) {
+      console.error("Erro ao excluir ponto:", error);
+    }
+  };
 
   const handleSalvarEdicao = async () => {
     if (pontoEdicao) {
@@ -176,6 +174,8 @@ const handleExcluirPonto = async (id: string) => {
               eventHandlers={{
                 click: () => {
                   if (modo === "exclusao") setPontoExclusao(p);
+                },
+                dblclick: () => {
                   if (modo === "visualizacao") setPontoEdicao(p);
                 },
               }}
@@ -185,7 +185,6 @@ const handleExcluirPonto = async (id: string) => {
               <Popup>
                 <Typography variant="subtitle1">{p.nome}</Typography>
                 <Typography variant="body2">Endereço: {p.endereco || "Não informado"}</Typography>
-                <Typography variant="body2">Resíduos aceitos: Vidro, Papel, Metais e Plástico</Typography>
                 <Typography variant="body2" color={p.operacional ? "success.main" : "error.main"}>
                   {p.operacional ? "Operacional" : "Inoperante"}
                 </Typography>

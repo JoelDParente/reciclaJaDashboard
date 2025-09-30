@@ -9,6 +9,7 @@ export type Quantidades = {
 export interface WasteRecord {
   id?: string;
   userId: string;
+  userName: string;
   bairro: string;
   cidade: string;
   quantidade: Quantidades;

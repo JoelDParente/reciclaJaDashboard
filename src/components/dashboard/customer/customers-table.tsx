@@ -18,7 +18,7 @@ import Button from '@mui/material/Button';
 import dayjs from 'dayjs';
 
 import { useSelection } from '@/hooks/use-selection';
-import { collection, getDocs, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/firebaseConfig';
 
 interface ReportRow {
@@ -35,43 +35,48 @@ export function ReportsTable(): React.JSX.Element {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
-  React.useEffect(() => {
-    const fetchData = async () => {
-      const reportsSnap = await getDocs(collection(db, 'irregular_reports'));
-      const reports: ReportRow[] = [];
+React.useEffect(() => {
+  // Referência da coleção
+  const reportsRef = collection(db, 'irregular_reports');
 
-      for (const reportDoc of reportsSnap.docs) {
-        const data = reportDoc.data();
-        const userId = data.userId;
-        let userName = 'Desconhecido';
-        let userEmail = '---';
-        let bairro = '---';
+  // Listener em tempo real
+  const unsubscribe = onSnapshot(reportsRef, async (snapshot) => {
+    const reports: ReportRow[] = [];
 
-        if (userId) {
-          const userSnap = await getDoc(doc(db, 'users', userId));
-          if (userSnap.exists()) {
-            const userData: any = userSnap.data();
-            userName = userData.nome;
-            userEmail = userData.email;
-            bairro = userData.endereco?.bairro ?? '---';
-          }
+    for (const reportDoc of snapshot.docs) {
+      const data = reportDoc.data();
+      const userId = data.userId;
+      let userName = 'Desconhecido';
+      let userEmail = '---';
+      let bairro = '---';
+
+      if (userId) {
+        const userSnap = await getDoc(doc(db, 'users', userId));
+        if (userSnap.exists()) {
+          const userData: any = userSnap.data();
+          userName = userData.nome;
+          userEmail = userData.email;
+          bairro = userData.endereco?.bairro ?? '---';
         }
-
-        reports.push({
-          id: reportDoc.id,
-          userName,
-          userEmail,
-          bairro,
-          localOcorrencia: data.reportText,
-          createdAt: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(),
-        });
       }
 
-      setRows(reports);
-    };
+      reports.push({
+        id: reportDoc.id,
+        userName,
+        userEmail,
+        bairro,
+        localOcorrencia: data.reportText,
+        createdAt: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(),
+      });
+    }
 
-    fetchData();
-  }, []);
+    setRows(reports);
+  });
+
+  // Cleanup do listener
+  return () => unsubscribe();
+}, []);
+
 
   const rowIds = React.useMemo(() => {
     return rows.map((row) => row.id);
@@ -184,6 +189,7 @@ export function ReportsTable(): React.JSX.Element {
         page={page}
         rowsPerPage={rowsPerPage}
         rowsPerPageOptions={[5, 10, 25]}
+        labelRowsPerPage="Linhas por página"
       />
     </Card>
   );

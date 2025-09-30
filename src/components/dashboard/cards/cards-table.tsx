@@ -130,7 +130,7 @@ export function CardsTable(): React.JSX.Element {
               required
               multiline
               minRows={3}
-              inputProps={{ maxLength: 100 }}
+              inputProps={{ maxLength: 90 }}
             />
             <FormControl fullWidth>
               <InputLabel color="success">Categoria</InputLabel>
@@ -159,6 +159,7 @@ export function CardsTable(): React.JSX.Element {
                   onClick={() =>
                     setFormData({ id: '', title: '', content: '', category: 'materiais' })
                   }
+                  color="inherit"
                 >
                   Cancelar
                 </Button>

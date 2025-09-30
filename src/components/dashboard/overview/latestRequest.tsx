@@ -45,9 +45,12 @@ export function LatestRequests(_sx: any): React.JSX.Element {
 
 React.useEffect(() => {
   const unsubscribe = SolicitacaoService.listenAllSolicitacoes(async (solicitacoes) => {
+    // Filtrar apenas solicitações pendentes
+    const pendentes = solicitacoes.filter(s => !s.isCompleted);
+
     const rows: RequestRow[] = [];
 
-    for (const s of solicitacoes) {
+    for (const s of pendentes) {
       let userName = "Desconhecido";
       let bairro = "---";
 
@@ -77,6 +80,7 @@ React.useEffect(() => {
   return () => unsubscribe(); // limpa o listener ao desmontar
 }, []);
 
+
   return (
 
 
@@ -97,7 +101,7 @@ React.useEffect(() => {
               <TableRow hover key={req.id}>
                 <TableCell>{req.userName}</TableCell>
                 <TableCell>{req.bairro}</TableCell>
-                <TableCell>{dayjs(req.createdAt).format('DD/MM/YYYY')}</TableCell>
+                <TableCell>{dayjs(req.createdAt).format('DD/MM/YYYY HH:mm:ss')}</TableCell>
               </TableRow>
             ))}
           </TableBody>

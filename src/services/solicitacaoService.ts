@@ -1,4 +1,3 @@
-// service
 import { SolicitacaoDAO } from "@/daos/solicitacaoDAO";
 import { SolicitacaoColeta } from "@/models/solicitacao";
 
@@ -74,4 +73,10 @@ export const SolicitacaoService = {
   listenAllSolicitacoes(callback: (requests: SolicitacaoColeta[]) => void) {
     return solicitacaoDao.listenAllRequests(callback);
   },
+
+  listenSolicitacoesPendentes(callback: (pendentes: SolicitacaoColeta[]) => void) {
+  return solicitacaoDao.listenAllRequests((allRequests) => {
+    callback(allRequests.filter(r => !r.isCompleted));
+  });
+},
 };
